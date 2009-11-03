@@ -211,6 +211,18 @@ public class VM implements Closeable {
         return exceptionBreakpoint(ref(exceptionClass),modifiers,c);
     }
 
+    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, final Closure c) {
+        return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
+    }
+
+    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, final Closure c) {
+        return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
+    }
+
+    public ExceptionRequest exceptionBreakpoint(String exceptionClass, final Closure c) {
+        return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
+    }
+
     /**
      * Resolves a class by the name.
      *
