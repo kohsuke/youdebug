@@ -1,7 +1,7 @@
 package org.kohsuke.autodbg;
 
-import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.event.Event;
+import com.sun.jdi.request.EventRequest;
 
 /**
  * @author Kohsuke Kawaguchi

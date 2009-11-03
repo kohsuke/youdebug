@@ -2,12 +2,12 @@ package org.kohsuke.autodbg;
 
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.ThreadDeathEvent;
+import com.sun.jdi.event.ThreadStartEvent;
 
-import java.util.Set;
-import java.util.Iterator;
 import java.util.AbstractSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**

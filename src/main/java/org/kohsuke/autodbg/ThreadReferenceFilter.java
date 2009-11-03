@@ -1,19 +1,19 @@
 package org.kohsuke.autodbg;
 
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.InvalidTypeException;
-import com.sun.jdi.ThreadGroupReference;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.StackFrame;
-import com.sun.jdi.MonitorInfo;
-import com.sun.jdi.Value;
 import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Field;
-import com.sun.jdi.Method;
+import com.sun.jdi.IncompatibleThreadStateException;
+import com.sun.jdi.InvalidTypeException;
 import com.sun.jdi.InvocationException;
+import com.sun.jdi.Method;
+import com.sun.jdi.MonitorInfo;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.StackFrame;
+import com.sun.jdi.ThreadGroupReference;
+import com.sun.jdi.ThreadReference;
 import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
 
 import java.util.List;

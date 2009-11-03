@@ -1,8 +1,6 @@
 package org.kohsuke.autodbg;
 
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.event.BreakpointEvent;
 
 /**
@@ -14,7 +12,7 @@ import com.sun.jdi.event.BreakpointEvent;
  * @author Kohsuke Kawaguchi
  */
 public class BreakpointDelegate extends ThreadReferenceFilter {
-    private ThreadVariables vars;
+    public final ThreadVariables vars;
 
     BreakpointDelegate(BreakpointEvent e) {
         super(e.thread());
@@ -23,5 +21,9 @@ public class BreakpointDelegate extends ThreadReferenceFilter {
 
     public Object propertyMissing(String name) {
         return vars.getProperty(name);
+    }
+
+    public void propertyMissing(String name, Object value) {
+        vars.setProperty(name,value);
     }
 }

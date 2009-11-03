@@ -2,13 +2,13 @@ package org.kohsuke.autodbg;
 
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Field;
+import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.LocalVariable;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.Value;
-import com.sun.jdi.IncompatibleThreadStateException;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MissingPropertyException;
 
@@ -32,45 +32,56 @@ public class ThreadVariables extends GroovyObjectSupport {
      * As a special form, "_0", "_1", ... can be used to refer to method arguments by position.
      */
     public Value getProperty(String name) {
-        if (name.startsWith("_")) {
+        Variable v = getVariable(name);
+        if (v!=null)    return v.get();
+        else            throw new MissingPropertyException(name,ThreadReference.class);
+    }
+
+    public void setProperty(String name, Object o) {
+        Variable v = getVariable(name);
+        if (v!=null)    v.set(o);
+        else            throw new MissingPropertyException(name,getClass());
+    }
+
+    public Variable getVariable(String name) {
+        try {
+            StackFrame f = thread.frame(0);
+
             try {
-                name = name.substring(1);
-                StackFrame f = thread.frame(0);
-
-                try {
-                    return f.getArgumentValues().get(Integer.parseInt(name));
-                } catch (NumberFormatException e) {
-                    // fall through
-                } catch (LinkageError e) {
-                    // fall through
-                }
-
-                // local variable?
-                try {
-                    LocalVariable v = f.visibleVariableByName(name);
-                    if (v!=null)    return f.getValue(v);
-                } catch (AbsentInformationException e) {
-                    // fall through
-    //                f.location().method().
-                }
-
-                // instance field?
-                ObjectReference $this = f.thisObject();
-                if ($this!=null) {
-                    Field fi = $this.referenceType().fieldByName(name);
-                    if (fi!=null)
-                        return $this.referenceType().getValue(fi);
-                }
-
-                // static field?
-                ReferenceType t = f.location().declaringType();
-                Field fi = t.fieldByName(name);
-                if (fi!=null && fi.isStatic())
-                    return t.getValue(fi);
-            } catch (IncompatibleThreadStateException e) {
-                throw new IllegalStateException(e);
+                return Variable.fromMethodArgument(f,Integer.parseInt(name));
+            } catch (NumberFormatException e) {
+                // fall through
+            } catch (LinkageError e) {
+                // fall through
             }
+
+            // local variable?
+            try {
+                LocalVariable v = f.visibleVariableByName(name);
+                if (v!=null)
+                    return Variable.fromLocalVariable(f,v);
+            } catch (AbsentInformationException e) {
+                // fall through
+//                f.location().method().
+            }
+
+            // instance field?
+            ObjectReference $this = f.thisObject();
+            if ($this!=null) {
+                Field fi = $this.referenceType().fieldByName(name);
+                if (fi!=null)
+                    return Variable.fromField($this,fi);
+            }
+
+            // static field?
+            ReferenceType t = f.location().declaringType();
+            Field fi = t.fieldByName(name);
+            if (fi!=null && fi.isStatic())
+                return Variable.fromField(t,fi);
+
+            return null;
+        } catch (IncompatibleThreadStateException e) {
+            throw new IllegalStateException(e);
         }
-        throw new MissingPropertyException(name,ThreadReference.class);
     }
 }
