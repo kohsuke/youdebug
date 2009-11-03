@@ -39,7 +39,7 @@ abstract class Variable {
     /**
      * Wraps a value into a JDI-compatible {@link Value}.
      */
-    private Value wrap(VirtualMachine vm, Object o) {
+    static Value wrap(VirtualMachine vm, Object o) {
         if (o==null)    return null;
         if (o instanceof Value)
             return (Value) o;
@@ -64,7 +64,7 @@ abstract class Variable {
         throw new IllegalArgumentException("Don't know how to wrap "+o.getClass());
     }
 
-    private Object unwrap(Value v) {
+    static Object unwrap(Value v) {
         if (v instanceof BooleanValue)
             return ((BooleanValue) v).booleanValue();
         if (v instanceof ByteValue)

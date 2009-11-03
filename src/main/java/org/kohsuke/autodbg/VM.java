@@ -84,6 +84,8 @@ public class VM implements Closeable {
      * the remote JVM exits, or the thread ges interrupted.
      */
     public void dispatchEvents() throws InterruptedException {
+        final VM old = CURRENT.get();
+        CURRENT.set(this);
         try {
             while (true) {
                 EventSet es = q.remove();
@@ -123,6 +125,8 @@ public class VM implements Closeable {
             }
         } catch (VMDisconnectedException e) {
             LOGGER.log(Level.INFO, VM.this.vm.name()+" disconnected");
+        } finally {
+            CURRENT.set(old);
         }
     }
 
@@ -226,6 +230,13 @@ public class VM implements Closeable {
         }
     }
 
+    /**
+     * Can be called during event dispatching to obtain the current {@link VM} instance.
+     */
+    public static VM current() {
+        return CURRENT.get();
+    }
+
     private static final class TunnelException extends RuntimeException {
         private TunnelException(Throwable cause) {
             super(cause);
@@ -238,4 +249,6 @@ public class VM implements Closeable {
 
     public static final ExceptionBreakpointModifier CAUGHT = ExceptionBreakpointModifier.CAUGHT;
     public static final ExceptionBreakpointModifier UNCAUGHT = ExceptionBreakpointModifier.UNCAUGHT;
+
+    private static final ThreadLocal<VM> CURRENT = new ThreadLocal<VM>();
 }

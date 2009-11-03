@@ -11,5 +11,7 @@ public class Test {
 		}
     }
 	public static boolean flag = true;
-	public static Object o = new Object();
+	public static Object o = new Object() {
+	    public int answer() { return 42; }
+    };
 }
