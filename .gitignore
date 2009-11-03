@@ -1,0 +1,6 @@
+*.swp
+target
+*.iml
+*.ipr
+*.iws
+*.class
