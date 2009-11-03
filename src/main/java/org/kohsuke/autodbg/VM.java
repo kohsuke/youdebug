@@ -16,6 +16,7 @@ import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.event.ExceptionEvent;
+import com.sun.jdi.event.VMStartEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ExceptionRequest;
@@ -102,6 +103,10 @@ public class VM implements Closeable {
                         handleThreadDeath((ThreadDeathEvent) e);
                         continue;
                     }
+                    if (e instanceof VMStartEvent) {
+                        LOGGER.info("Application started");
+                        continue;
+                    }
                     if (e instanceof VMDeathEvent) {
                         LOGGER.info("Application exited");
                         return; // peacefully terminate the execution
@@ -140,7 +145,7 @@ public class VM implements Closeable {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
             HANDLER.put(bp, new EventHandler<BreakpointEvent>() {
                 public void on(BreakpointEvent e) {
-                    c.setDelegate(e.thread());
+                    c.setDelegate(new BreakpointDelegate(e));
                     c.call();
                 }
             });

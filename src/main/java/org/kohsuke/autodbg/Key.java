@@ -6,7 +6,7 @@ import com.sun.jdi.event.Event;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class Key<T> {
+class Key<T> {
     private final Class<T> type;
 
     public Key(Class<T> type) {
