@@ -143,7 +143,7 @@ public class VM implements Closeable {
      * invoke the closure.
      */
     public BundledBreakpointRequest breakpoint(String className, int line, final Closure c) throws AbsentInformationException {
-        ReferenceType math = $(className);
+        ReferenceType math = ref(className);
         List<BreakpointRequest> bps = new ArrayList<BreakpointRequest>();
         for (Location loc : math.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
@@ -181,17 +181,27 @@ public class VM implements Closeable {
     }
 
     public ExceptionRequest exceptionBreakpoint(String exceptionClassName, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
-        ReferenceType ref = $(exceptionClassName);
+        ReferenceType ref = ref(exceptionClassName);
         if (ref==null)      throw new IllegalArgumentException("No such class: "+exceptionClassName);
         return exceptionBreakpoint(ref,modifiers,c);
     }
 
-    public ReferenceType $(String className) {
-        for (ReferenceType r : vm.allClasses()) {
-            if (r.name().equals(className))
-                return r;
-        }
-        return null;
+    /**
+     * Resolves a class by the name.
+     *
+     * TODO: use the current thread and classloader to try to disambiguate in a multi-classloader situation
+     */
+    public ReferenceType ref(String className) {
+        List<ReferenceType> r = vm.classesByName(className);
+        if (r.isEmpty())        return null;
+        return r.get(0);
+    }
+
+    /**
+     * Resolves the same class on the target JVM.
+     */
+    public ReferenceType ref(Class c) {
+        return ref(c.getName());
     }
 
     /**

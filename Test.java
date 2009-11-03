@@ -12,6 +12,7 @@ public class Test {
     }
 	public static boolean flag = true;
 	public static Object o = new Object() {
-	    public int answer() { return 42; }
+	    public int answer(int x) { return 42+x; }
+	    public String toString() { return "custom tostring"; }
     };
 }

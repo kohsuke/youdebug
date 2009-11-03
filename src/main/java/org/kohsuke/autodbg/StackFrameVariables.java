@@ -45,7 +45,7 @@ public class StackFrameVariables extends GroovyObjectSupport {
 
     public Variable getVariable(String name) {
         try {
-            if (name.startsWith("_"))
+            if (name.startsWith("ref"))
                 return Variable.fromMethodArgument(frame,Integer.parseInt(name.substring(1)));
         } catch (NumberFormatException e) {
             // fall through

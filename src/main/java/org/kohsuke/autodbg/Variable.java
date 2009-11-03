@@ -18,6 +18,10 @@ import com.sun.jdi.IntegerValue;
 import com.sun.jdi.LongValue;
 import com.sun.jdi.FloatValue;
 import com.sun.jdi.DoubleValue;
+import com.sun.jdi.StringReference;
+
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Variable that supports get/set.
@@ -34,6 +38,16 @@ abstract class Variable {
     public abstract Value get();
     public Object getUnwrapped() {
         return unwrap(get());
+    }
+
+    /**
+     * Wraps an array by individually wrapping its members.
+     */
+    static List<Value> wrapList(VirtualMachine vm, Object[] args) {
+        List<Value> arguments = new ArrayList<Value>();
+        for (Object a : args)
+            arguments.add(wrap(vm,a));
+        return arguments;
     }
 
     /**
@@ -81,6 +95,8 @@ abstract class Variable {
             return ((FloatValue) v).floatValue();
         if (v instanceof DoubleValue)
             return ((DoubleValue) v).doubleValue();
+        if (v instanceof StringReference)
+            return ((StringReference)v).value();
         return v;
     }
 
