@@ -210,6 +210,9 @@ public class VM implements Closeable {
                         binding.setVariable("vm",this);
 
                         GroovyShell groovy = new GroovyShell(binding,cc);
+//                        InputStream res = getClass().getClassLoader().getResourceAsStream("register.groovy");
+//                        groovy.parse(res).run();
+
                         groovy.parse(script).run();
                         dispatchEvents();
                         return null;
