@@ -8,7 +8,6 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.StackFrame;
 import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Value;
 import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MissingPropertyException;
 
@@ -31,9 +30,9 @@ public class ThreadVariables extends GroovyObjectSupport {
      * This searches all the local variables and arguments, instance fields and static fields.
      * As a special form, "_0", "_1", ... can be used to refer to method arguments by position.
      */
-    public Value getProperty(String name) {
+    public Object getProperty(String name) {
         Variable v = getVariable(name);
-        if (v!=null)    return v.get();
+        if (v!=null)    return v.getUnwrapped();
         else            throw new MissingPropertyException(name,ThreadReference.class);
     }
 
