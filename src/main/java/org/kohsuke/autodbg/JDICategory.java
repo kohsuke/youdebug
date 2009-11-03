@@ -15,6 +15,8 @@ import com.sun.jdi.Value;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Field;
+import com.sun.jdi.Location;
+import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.request.EventRequest;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
@@ -30,6 +32,7 @@ import java.util.Stack;
 import static java.util.logging.Level.FINE;
 import java.util.logging.Logger;
 import java.lang.reflect.InvocationTargetException;
+import java.io.PrintStream;
 
 /**
  * Method augmentation on top of JDI for Groovy
@@ -227,6 +230,23 @@ public class JDICategory {
      */
     public static String toString(ObjectReference ref) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
         return methodMissing(ref,"toString").toString();
+    }
+
+    /**
+     * Dumps the current thread stack
+     */
+    public static void dump(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
+        int c = tr.frameCount();
+        for (int i=0; i<c; i++) {
+            StackFrame f = tr.frame(i);
+            Location l = f.location();
+            try {
+                String n = l.sourceName();
+                out.printf(" at %s.%s(%s:%d)\n", l.declaringType().name(), l.method().name(), n, l.lineNumber());
+            } catch (AbsentInformationException e) {
+                out.printf(" at %s.%s\n", l.declaringType().name(), l.method().name());
+            }
+        }
     }
 
     private static final Logger LOGGER = Logger.getLogger(JDICategory.class.getName());
