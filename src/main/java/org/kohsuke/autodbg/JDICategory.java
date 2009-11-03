@@ -14,10 +14,12 @@ import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import com.sun.jdi.InterfaceType;
 import com.sun.jdi.ArrayType;
+import com.sun.jdi.Field;
 import com.sun.jdi.request.EventRequest;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
 import groovy.lang.MetaClass;
+import groovy.lang.MissingPropertyException;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 import java.util.Arrays;
@@ -72,9 +74,28 @@ public class JDICategory {
     }
 
     /**
+     * Instance field retrieval.
+     */
+    public static Object propertyMissing(ObjectReference ref, String name) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
+        return lvalue(ref, name).getUnwrapped();
+    }
+
+    /**
+     * Instance field assignment.
+     */
+    public static void propertyMissing(ObjectReference ref, String name, Object value) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
+        lvalue(ref, name).set(value);
+    }
+
+    private static Variable lvalue(ObjectReference ref, String name) {
+        name = unescape(name);
+        Field f = ref.referenceType().fieldByName(name);
+        if (f==null)        throw new MissingPropertyException("No such property '"+name+"' on "+ref.referenceType().name());
+        return Variable.fromField(ref,f);
+    }
+
+    /**
      * Select the right method to invoke based on the arguments and their types.
-     *
-     * TODO: implement this properly
      *
      * @param staticOnly
      *      If true, only search the static methods.
@@ -173,8 +194,21 @@ public class JDICategory {
      * Static field retrieval.
      */
     public static Object propertyMissing(ClassType c, String name) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
+        return lvalue(c, name).getUnwrapped();
+    }
+
+    /**
+     * Static field assignment.
+     */
+    public static void propertyMissing(ClassType c, String name, Object value) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
+        lvalue(c,name).set(value);
+    }
+
+    private static Variable lvalue(ClassType c, String name) {
         name = unescape(name);
-        return Variable.unwrap(c.getValue(c.fieldByName(name)));
+        Field f = c.fieldByName(name);
+        if (f==null)        throw new MissingPropertyException("No such property '"+name+"' on "+c.name());
+        return Variable.fromField(c,f);
     }
 
     /**
