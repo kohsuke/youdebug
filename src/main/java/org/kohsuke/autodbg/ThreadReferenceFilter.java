@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Delegation to another {@link ThreadReference}.
+ *
  * @author Kohsuke Kawaguchi
  */
 class ThreadReferenceFilter implements ThreadReference {
