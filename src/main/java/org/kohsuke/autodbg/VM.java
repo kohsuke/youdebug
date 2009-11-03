@@ -6,6 +6,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.VirtualMachine;
+import com.sun.jdi.IncompatibleThreadStateException;
 import com.sun.jdi.event.BreakpointEvent;
 import com.sun.jdi.event.Event;
 import com.sun.jdi.event.EventQueue;
@@ -30,6 +31,8 @@ import org.codehaus.groovy.runtime.GroovyCategorySupport;
 
 import java.io.Closeable;
 import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -276,6 +279,21 @@ public class VM implements Closeable {
         } catch (TunnelException e) {
             throw (InterruptedException)e.getCause();
         }
+    }
+
+    public void dumpAllThreads() throws IncompatibleThreadStateException {
+        dumpAllThreads(System.out);
+    }
+
+    public void dumpAllThreads(PrintStream out) throws IncompatibleThreadStateException {
+        dumpAllThreads(new PrintWriter(out,true));
+    }
+
+    public void dumpAllThreads(PrintWriter out) throws IncompatibleThreadStateException {
+        for (ThreadReference r : vm.allThreads()) {
+            JDICategory.dump(r,out);
+        }
+
     }
 
     /**

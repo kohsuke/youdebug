@@ -17,6 +17,7 @@ bp = vm.breakpoint("Test",9) {
     if (++i>2) {
         vars.flag = false;
         bp.disable();
+        vm.dumpAllThreads();
     }
 }
 

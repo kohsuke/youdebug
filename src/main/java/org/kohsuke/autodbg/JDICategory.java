@@ -17,6 +17,7 @@ import com.sun.jdi.ArrayType;
 import com.sun.jdi.Field;
 import com.sun.jdi.Location;
 import com.sun.jdi.AbsentInformationException;
+import static com.sun.jdi.ThreadReference.*;
 import com.sun.jdi.request.EventRequest;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
@@ -33,6 +34,7 @@ import static java.util.logging.Level.FINE;
 import java.util.logging.Logger;
 import java.lang.reflect.InvocationTargetException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 
 /**
  * Method augmentation on top of JDI for Groovy
@@ -232,19 +234,42 @@ public class JDICategory {
         return methodMissing(ref,"toString").toString();
     }
 
+    public static void dump(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
+        dump(tr,new PrintWriter(out,true));
+    }
+
+    public static String getStatusMessage(ThreadReference tr) {
+        int st = tr.status();
+        switch (st) {
+        case THREAD_STATUS_UNKNOWN:     return "UNKNOWN";
+        case THREAD_STATUS_ZOMBIE:      return "ZOMBIE";
+        case THREAD_STATUS_RUNNING:     return "RUNNING";
+        case THREAD_STATUS_SLEEPING:    return "SLEEPING";
+        case THREAD_STATUS_MONITOR:     return "MONITOR";
+        case THREAD_STATUS_WAIT:        return "WAIT";
+        case THREAD_STATUS_NOT_STARTED: return "NOT_STARTED";
+        default:                        return "STATE"+String.valueOf(st);
+        }
+    }
+
     /**
      * Dumps the current thread stack
      */
-    public static void dump(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
+    public static void dump(ThreadReference tr, PrintWriter out) throws IncompatibleThreadStateException {
+        out.printf("\"%s\" %s\n", tr.name(), getStatusMessage(tr));
         int c = tr.frameCount();
         for (int i=0; i<c; i++) {
-            StackFrame f = tr.frame(i);
-            Location l = f.location();
+            Location l = tr.frame(i).location();
+            out.printf("\tat %s.%s", l.declaringType().name(), l.method().name());
             try {
                 String n = l.sourceName();
-                out.printf(" at %s.%s(%s:%d)\n", l.declaringType().name(), l.method().name(), n, l.lineNumber());
+                int line = l.lineNumber();
+                if (line<0)
+                    out.println("(Native Method)");
+                else
+                    out.printf("(%s:%s)\n", n, line);
             } catch (AbsentInformationException e) {
-                out.printf(" at %s.%s\n", l.declaringType().name(), l.method().name());
+                out.println();
             }
         }
     }
