@@ -17,9 +17,11 @@ import com.sun.jdi.event.ThreadStartEvent;
 import com.sun.jdi.event.VMDeathEvent;
 import com.sun.jdi.event.VMDisconnectEvent;
 import com.sun.jdi.event.VMStartEvent;
+import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.ExceptionRequest;
+import com.sun.jdi.request.ClassPrepareRequest;
 import groovy.lang.Binding;
 import groovy.lang.Closure;
 import groovy.lang.GroovyShell;
@@ -31,6 +33,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.EnumSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -130,6 +133,23 @@ public class VM implements Closeable {
         }
     }
 
+    public ClassPrepareRequest classPrepare(String name, final Closure c) {
+        ClassPrepareRequest r = req.createClassPrepareRequest();
+        r.addClassFilter(name);
+        HANDLER.put(r,new EventHandler<ClassPrepareEvent>() {
+            public void on(ClassPrepareEvent event) {
+                c.setDelegate(event.thread());
+                c.call(event.referenceType());
+            }
+        });
+        r.enable();
+        return r;
+    }
+
+    public ClassPrepareRequest classPrepare(Class clazz, final Closure c) {
+        return classPrepare(clazz.getName(),c);
+    }
+
     private void handleThreadStart(ThreadStartEvent tse) {
         threads.onThreadStart(tse);
     }
@@ -169,6 +189,9 @@ public class VM implements Closeable {
      * </pre>
      */
     public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
+        // default to all situations, since "none" isn't useful
+        if (modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
+
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
         HANDLER.put(q,new EventHandler<ExceptionEvent>() {
             public void on(ExceptionEvent e) {
@@ -181,9 +204,11 @@ public class VM implements Closeable {
     }
 
     public ExceptionRequest exceptionBreakpoint(String exceptionClassName, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
-        ReferenceType ref = ref(exceptionClassName);
-        if (ref==null)      throw new IllegalArgumentException("No such class: "+exceptionClassName);
-        return exceptionBreakpoint(ref,modifiers,c);
+        return exceptionBreakpoint(ref(exceptionClassName),modifiers,c);
+    }
+
+    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
+        return exceptionBreakpoint(ref(exceptionClass),modifiers,c);
     }
 
     /**
@@ -193,7 +218,8 @@ public class VM implements Closeable {
      */
     public ReferenceType ref(String className) {
         List<ReferenceType> r = vm.classesByName(className);
-        if (r.isEmpty())        return null;
+//        getCurrentThread().frame(0).location().declaringType().classLoader().
+        if (r.isEmpty())        throw new IllegalArgumentException("No such class: "+className);
         return r.get(0);
     }
 

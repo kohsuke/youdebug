@@ -19,3 +19,10 @@ bp = vm.breakpoint("Test",9) {
         bp.disable();
     }
 }
+
+vm.classPrepare(IllegalArgumentException.class) { t ->
+    println "Loaded the exception breakpoint";
+    vm.exceptionBreakpoint(t,[]) { e ->
+        println "Caught ${e}";        
+    }
+}

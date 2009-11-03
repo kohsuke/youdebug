@@ -9,6 +9,8 @@ public class Test {
 			int i = Math.max(3,2);
 			;
 		}
+
+		throw new IllegalArgumentException("trying an exception breakpoint");
     }
 	public static boolean flag = true;
 	public static Object o = new Object() {
