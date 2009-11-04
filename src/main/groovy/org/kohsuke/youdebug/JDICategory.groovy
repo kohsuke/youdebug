@@ -1,44 +1,32 @@
-package org.kohsuke.youdebug;
+package org.kohsuke.youdebug
 
-import com.sun.jdi.ClassNotLoadedException;
-import com.sun.jdi.ClassType;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.InvalidTypeException;
-import com.sun.jdi.InvocationException;
-import com.sun.jdi.Method;
-import com.sun.jdi.ObjectReference;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.StackFrame;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.Type;
-import com.sun.jdi.Value;
-import com.sun.jdi.InterfaceType;
-import com.sun.jdi.ArrayType;
-import com.sun.jdi.Field;
-import com.sun.jdi.Location;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.PrimitiveType;
-import com.sun.jdi.ArrayReference;
-import static com.sun.jdi.ThreadReference.*;
-import com.sun.jdi.request.EventRequest;
-import groovy.lang.Closure;
-import groovy.lang.GroovyObject;
-import groovy.lang.MetaClass;
-import groovy.lang.MissingPropertyException;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Stack;
-import java.util.Map;
-import java.util.HashMap;
-import static java.util.logging.Level.FINE;
-import java.util.logging.Logger;
-import java.lang.reflect.InvocationTargetException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ArrayType
+import com.sun.jdi.ClassNotLoadedException
+import com.sun.jdi.ClassType
+import com.sun.jdi.Field
+import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.InterfaceType
+import com.sun.jdi.InvalidTypeException
+import com.sun.jdi.InvocationException
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.PrimitiveType
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.StackFrame
+import com.sun.jdi.ThreadReference
+import com.sun.jdi.Type
+import com.sun.jdi.Value
+import com.sun.jdi.request.EventRequest
+import java.util.logging.Logger
+import org.kohsuke.youdebug.NoSuchMethodException
+import org.kohsuke.youdebug.StackFrameVariables
+import org.kohsuke.youdebug.VM
+import org.kohsuke.youdebug.Variable
+import static com.sun.jdi.ThreadReference.*
+import static java.util.logging.Level.FINE
 
 /**
  * Method augmentation on top of JDI for Groovy
@@ -75,6 +63,22 @@ public class JDICategory {
     }
 
     /**
+     * Dumps the exception
+     *
+     * @param out
+     *      Either {@link PrintWriter} or {@link PrintStream}.
+     */
+    public static void dumpStackTrace (ObjectReference exp, out) {
+        def frames = exp.getStackTrace();
+        out.println(exp.toString());
+        int len = frames.length();
+        for ( int i=0; i<len; i++ ) {
+            def f = frames[i];
+            out.println("\tat ${f.getClassName()}.${f.getMethodName()}(${f.getFileName()}:${f.getLineNumber()})")
+        }
+    }
+
+    /**
      * Allow method invocation directly on the {@link ObjectReference} instance.
      */
     public static Object methodMissing(ObjectReference ref, String name, Object... args) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
@@ -89,7 +93,7 @@ public class JDICategory {
                     chooseMethod(ref.referenceType(), name, arguments, false),
                     arguments, 0));
         } catch (InvocationException e) {
-            Util.dumpStackTrace(e.exception(),System.out);
+            e.exception().dumpStackTrace(System.out);
             throw e;
         }
     }
@@ -304,7 +308,7 @@ public class JDICategory {
     private static final Map<String,String> primitive2box = new HashMap<String, String>();
 
     private static void primitive2box(Class primitive, Class box) {
-        primitive2box.put(primitive.getName(),box.getName());
+        primitive2box[primitive.name] = box.name;
     }
 
     static {
@@ -316,41 +320,20 @@ public class JDICategory {
         primitive2box(float.class,Float.class);
         primitive2box(double.class,Double.class);
 
-        for (final java.lang.reflect.Method m : JDICategory.class.getMethods()) {
-            if (!m.getName().equals("methodMissing") && !m.getName().equals("propertyMissing"))
-                continue;
+        JDICategory.class.methods.findAll { m -> m.name=="methodMissing" }.each { java.lang.reflect.Method m ->
+            Class target = m.parameterTypes[0];
+            target.metaClass."${m.name}" = {String name, Object args ->
+                return m.invoke(null, [delegate, name, args] as Object[]);
+            }
+        }
 
-            Class<?>[] pt = m.getParameterTypes();
-            Class target = pt[0];
-            final Class[] cpt = new Class[pt.length-1];
-            System.arraycopy(pt,1,cpt,0,pt.length-1);
-            if (cpt.length==2)  cpt[1]=Object.class; // methodMissing needs to return [String,Object] not [String,Object[]]
+        JDICategory.class.methods.findAll { m -> m.name=="propertyMissing" }.each { java.lang.reflect.Method m ->
+            Class[] pt = m.parameterTypes
+            Closure c;
+            if (pt.length==2)   c = {name -> m.invoke(null,delegate,name);}
+            else                c = {name, value-> m.invoke(null,delegate,name,value); }
 
-            MetaClass mc = DefaultGroovyMethods.getMetaClass(target);
-            GroovyObject mmc = (GroovyObject) mc;
-
-            mmc.setProperty(m.getName(),new Closure(null) {
-                public Object call(Object[] args) {
-                    try {
-                        if (args.length==2)
-                            return m.invoke(null, getDelegate(),args[0],args[1]);
-                        else
-                            return m.invoke(null, getDelegate(),args[0]);
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalAccessError(m.getName());
-                    } catch (InvocationTargetException e) {
-                        Throwable t = e.getTargetException();
-                        if (t instanceof RuntimeException)
-                            throw (RuntimeException) t;
-                        if (t instanceof Error)
-                            throw (Error) t;
-                        throw new org.kohsuke.youdebug.InvocationException(t);
-                    }
-                }
-                public Class[] getParameterTypes() {
-                    return cpt;
-                }
-            });
+            pt[0].metaClass."${m.name}" = c;
         }
     }
 }

@@ -25,6 +25,8 @@ import com.sun.jdi.event.ExceptionEvent
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.Location
 import java.util.logging.Logger
+import java.lang.management.ManagementFactory
+import com.sun.management.HotSpotDiagnosticMXBean
 
 /**
  * Debugger view of a Virtual machine. 
@@ -308,7 +310,7 @@ public class VM implements Closeable {
     public void dumpHeap() {
         def mf = loadClass(ManagementFactory.class)
         def server = mf.getPlatformMBeanServer();
-        def bean = mf.newPlatformMXBeanProxy(server,"com.sun.management:type=HotSpotDiagnostic", ref(HotSpotDiagnosticMXBean.class));
+        def bean = mf.newPlatformMXBeanProxy(server,"com.sun.management:type=HotSpotDiagnostic", loadClass(HotSpotDiagnosticMXBean.class));
         new File("/tmp/heapdump").delete();
         bean.dumpHeap("/tmp/heapdump",true);
     }
