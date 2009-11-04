@@ -1,6 +1,8 @@
 def i=0;
 
 bp = vm.breakpoint("Test",9) {
+    org.kohsuke.autodbg.Util.dumpHeap(vm);
+
     // access local variables. Either use 'vars' to disambiguate, or just use the variable name directly for convenience
     println "Hit ${vars.flag} : ${flag.class}";
 
@@ -26,6 +28,5 @@ vm.classPrepare(IllegalArgumentException.class) { t ->
     vm.exceptionBreakpoint(t) { e ->
         println "Caught ${e}";
         dumpThread(System.err);
-        org.kohsuke.autodbg.Util.dumpHeap(vm);
     }
 }

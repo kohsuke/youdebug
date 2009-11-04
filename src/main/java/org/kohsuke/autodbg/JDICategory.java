@@ -17,8 +17,12 @@ import com.sun.jdi.ArrayType;
 import com.sun.jdi.Field;
 import com.sun.jdi.Location;
 import com.sun.jdi.AbsentInformationException;
+import com.sun.jdi.PrimitiveType;
+import com.sun.jdi.ClassLoaderReference;
+import com.sun.jdi.ArrayReference;
 import static com.sun.jdi.ThreadReference.*;
 import com.sun.jdi.request.EventRequest;
+import com.sun.tools.jdi.ClassLoaderReferenceImpl;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
 import groovy.lang.MetaClass;
@@ -30,6 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Stack;
+import java.util.Map;
+import java.util.HashMap;
 import static java.util.logging.Level.FINE;
 import java.util.logging.Logger;
 import java.lang.reflect.InvocationTargetException;
@@ -64,6 +70,13 @@ public class JDICategory {
     }
 
     /**
+     * Index access to array.
+     */
+    public static Value getAt(ArrayReference a, int index) {
+        return a.getValue(index);
+    }
+
+    /**
      * Allow method invocation directly on the {@link ObjectReference} instance.
      */
     public static Object methodMissing(ObjectReference ref, String name, Object... args) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
@@ -73,9 +86,14 @@ public class JDICategory {
             LOGGER.fine("Invoking "+name+" on "+ref+" with "+ Arrays.asList(args));
 
         List<Value> arguments = Variable.wrapList(ref.virtualMachine(), args);
-        return Variable.unwrap(ref.invokeMethod( VM.current().getCurrentThread(),
-                chooseMethod(ref.referenceType(), name, arguments, false),
-                arguments, 0));
+        try {
+            return Variable.unwrap(ref.invokeMethod( VM.current().getCurrentThread(),
+                    chooseMethod(ref.referenceType(), name, arguments, false),
+                    arguments, 0));
+        } catch (InvocationException e) {
+            Util.dumpStackTrace(e.exception(),System.out);
+            throw e;
+        }
     }
 
     /**
@@ -133,6 +151,12 @@ public class JDICategory {
     public static boolean isAssignableFrom(Type type, Type subtype) throws ClassNotLoadedException {
         // this handles all the primitives and other simple cases
         if (subtype.equals(type))      return true;
+
+        // transparent boxing/unboxing
+        if (type instanceof PrimitiveType && subtype instanceof ClassType)
+            return subtype.name().equals(primitive2box.get(type.name()));
+        if (subtype instanceof PrimitiveType && type instanceof ClassType)
+            return type.name().equals(primitive2box.get(subtype.name()));
 
         if (subtype instanceof ClassType) {
             ClassType ct = (ClassType) subtype;
@@ -276,7 +300,19 @@ public class JDICategory {
 
     private static final Logger LOGGER = Logger.getLogger(JDICategory.class.getName());
 
+    /**
+     * Primitive type to boxed type mapping
+     */
+    private static final Map<String,String> primitive2box = new HashMap<String, String>();
+
+    private static void primitive2box(Class primitive, Class box) {
+        primitive2box.put(primitive.getName(),box.getName());
+    }
+
     static {
+        primitive2box(boolean.class,Boolean.class);
+        // TODO: complete it
+
         for (final java.lang.reflect.Method m : JDICategory.class.getMethods()) {
             if (!m.getName().equals("methodMissing") && !m.getName().equals("propertyMissing"))
                 continue;

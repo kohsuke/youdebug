@@ -75,6 +75,8 @@ abstract class Variable {
             return vm.mirrorOf((Double) o);
         if (o instanceof String)
             return vm.mirrorOf((String) o);
+        if (o instanceof ReferenceType)
+            return ((ReferenceType)o).classObject();
         throw new IllegalArgumentException("Don't know how to wrap "+o.getClass());
     }
 
