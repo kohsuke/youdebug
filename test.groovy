@@ -26,5 +26,6 @@ vm.classPrepare(IllegalArgumentException.class) { t ->
     vm.exceptionBreakpoint(t) { e ->
         println "Caught ${e}";
         dumpThread(System.err);
+        org.kohsuke.autodbg.Util.dumpHeap(vm);
     }
 }
