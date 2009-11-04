@@ -18,7 +18,7 @@ bp = v.breakpoint("Test",9) {
     // making a static method call
     v.ref(System.class).out.'@println'("Hello from debugger");
 
-    if (++i>2) {
+    if (++i>0) {
         vars.flag = false;
         bp.disable();
         v.dumpAllThreads();
@@ -29,7 +29,7 @@ v.classPrepare(IllegalArgumentException.class) { t ->
     println "Loaded the exception breakpoint";
     v.exceptionBreakpoint(t) { e ->
         println "Caught ${e}";
-        dumpThread(System.err);
+        e.dumpStackTrace(System.err)
         v.dumpHeap();
     }
 }
