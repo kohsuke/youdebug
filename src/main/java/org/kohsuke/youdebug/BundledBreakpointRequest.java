@@ -58,55 +58,45 @@ public class BundledBreakpointRequest implements EventRequest {
             r.addInstanceFilter(instance);
     }
 
-    @Override
     public boolean isEnabled() {
         return one().isEnabled();
     }
 
-    @Override
     public void setEnabled(boolean val) {
         for (BreakpointRequest r : requests)
             r.setEnabled(val);
     }
 
-    @Override
     public void enable() {
         setEnabled(true);
     }
 
-    @Override
     public void disable() {
         setEnabled(false);
     }
 
-    @Override
     public void addCountFilter(int count) {
         for (BreakpointRequest r : requests)
             r.addCountFilter(count);
     }
 
-    @Override
     public void setSuspendPolicy(int policy) {
         for (BreakpointRequest r : requests)
             r.setSuspendPolicy(policy);
     }
 
-    @Override
     public int suspendPolicy() {
         return one().suspendPolicy();
     }
 
-    @Override
     public void putProperty(Object key, Object value) {
         one().putProperty(key,value);
     }
 
-    @Override
     public Object getProperty(Object key) {
         return one().getProperty(key);
     }
 
-    @Override
     public VirtualMachine virtualMachine() {
         return one().virtualMachine();
     }
