@@ -1,0 +1,48 @@
+
+What is YouDebug?
+
+  Here is the problem; your program fails at a customer's site with an exception, but you can't (or don't want to) reproduce the problem on your computer, because it's too time consuming. If only you could attach the debugger and collect a few information, you can rapidly proceed on fixing the problem.
+  But running a debugger at a customer's site is practically impossible; if the user isn't a techie, it's out of question. Even if he is, you'd still need the source code loaded up in the IDE, then you have to explain to him where he needs to set breakpoints and what to report back to you. It's just too much work.
+
+  That's where YouDebug comes into play. YouDebug is a Java program that lets you script a debug session through {{{http://grovy.codehaus.org/}Groovy}}. You can think of it as a programmable, non-interactive debugger --- you can create a breakpoint, evaluate expressions, have it dump threads, and a lot more, without requiring any source code. Your customer can just run the tool with the script you supplied, without any knowledge about Java.
+
+  YouDebug uses the same {{{http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi}Java Debug Interface}} that IDEs use, so from the point of view of your program, YouDebug behaves as a debugger. Therefore you need not do anything special with your program.
+
+  In this way, the troubleshooting of your program gets a lot easier.
+
+
+Getting Started
+
+  Let's say you have the following program, which computes a String and then do substring.
+
+-------------
+public class SubStringTest {
+    public static void main(String[] args) {
+        String s = someLengthComputationOfString();
+        System.out.println(s.substring(5));
+    }
+
+    private static String someLengthComputationOfString() {
+        ...;
+    }
+}
+-------------
+
+  At runtime, it's failing with the <<<StringIndexOutOfRangeException>>>:
+
+-------------
+Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String index out of range: -1
+	at java.lang.String.substring(String.java:1949)
+	at java.lang.String.substring(String.java:1916)
+	at SubStringTest.main(SubStringTest.java:7)
+-------------
+
+  So you know {{{s.substring(5)}}} isn't working, but you want to know the value of the variable 's'.
+
+  To do this, you write a YouDebug script. YouDebug scripts are Groovy scripts with some DSL-like syntax sugars specialized for debugging. The following script sets a breakpoint at line 7 of the SubStringTest class, and every time the breakpoint hits, it'll print out the value of the local variable 's'.
+
+--------------
+breakpoint("com.acme.SubStringTest",7) {
+  println "s="+s;
+}
+--------------
