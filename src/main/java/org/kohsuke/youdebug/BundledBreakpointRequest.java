@@ -6,6 +6,7 @@ import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
+import com.sun.jdi.request.ClassPrepareRequest;
 
 import java.util.List;
 
@@ -14,10 +15,14 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class BundledBreakpointRequest extends BundledEventRequest<BreakpointRequest> implements BreakpointRequest {
+public class BundledBreakpointRequest extends BundledEventRequestWithClassPrepare<BreakpointRequest> implements BreakpointRequest {
+
+    /*package*/ BundledBreakpointRequest(ClassPrepareRequest req, List<BreakpointRequest> requests) {
+        super(req, requests);
+    }
 
     /*package*/ BundledBreakpointRequest(List<BreakpointRequest> requests) {
-        super(requests);
+        this(null,requests);
     }
 
     /**

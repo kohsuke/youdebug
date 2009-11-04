@@ -28,6 +28,7 @@ import java.util.logging.Logger
 import java.lang.management.ManagementFactory
 import com.sun.management.HotSpotDiagnosticMXBean
 import com.sun.jdi.request.EventRequest
+import java.util.logging.Level
 
 /**
  * Debugger view of a Virtual machine. 
@@ -121,7 +122,7 @@ public class VM implements Closeable {
                 es.resume();
             }
         } catch (VMDisconnectedException e) {
-            LOGGER.log(Level.INFO, vm.name()+" disconnected");
+            LOGGER.log(Level.INFO, "Tar get JVM  disconnected");
         } finally {
             CURRENT.set(old);
         }
@@ -154,12 +155,16 @@ public class VM implements Closeable {
      * Sets a break point at the specified line in the specified class, and if it hits,
      * invoke the closure.
      */
-    public BundledBreakpointRequest breakpoint(String className, int line, final Closure c) throws AbsentInformationException {
-        return breakpoint(ref(className),line,c);
+    public BundledBreakpointRequest breakpoint(String className, int line, final Closure body) throws AbsentInformationException {
+        def bpreqs = [];
+        def r = forEachClass(className) { ReferenceType t ->
+            bpreqs.add(breakpoint(t,line,body));
+        }
+        return new BundledBreakpointRequest(r,bpreqs);
     }
 
     public BundledBreakpointRequest breakpoint(Class className, int line, final Closure c) throws AbsentInformationException {
-        return breakpoint(ref(className),line,c);
+        return breakpoint(className.name,line,c);
     }
 
     public BundledBreakpointRequest breakpoint(ReferenceType type, int line, final Closure c) throws AbsentInformationException {
