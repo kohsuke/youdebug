@@ -309,7 +309,12 @@ public class JDICategory {
 
     static {
         primitive2box(boolean.class,Boolean.class);
-        // TODO: complete it
+        primitive2box(char.class,Character.class);
+        primitive2box(short.class,Short.class);
+        primitive2box(int.class,Integer.class);
+        primitive2box(long.class,Long.class);
+        primitive2box(float.class,Float.class);
+        primitive2box(double.class,Double.class);
 
         for (final java.lang.reflect.Method m : JDICategory.class.getMethods()) {
             if (!m.getName().equals("methodMissing") && !m.getName().equals("propertyMissing"))
