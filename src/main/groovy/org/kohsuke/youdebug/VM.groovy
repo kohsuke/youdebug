@@ -1,47 +1,33 @@
-package org.kohsuke.youdebug;
+package org.kohsuke.youdebug
 
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.ThreadReference;
-import com.sun.jdi.VMDisconnectedException;
-import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.IncompatibleThreadStateException;
-import com.sun.jdi.event.BreakpointEvent;
-import com.sun.jdi.event.Event;
-import com.sun.jdi.event.EventQueue;
-import com.sun.jdi.event.EventSet;
-import com.sun.jdi.event.ExceptionEvent;
-import com.sun.jdi.event.LocatableEvent;
-import com.sun.jdi.event.ThreadDeathEvent;
-import com.sun.jdi.event.ThreadStartEvent;
-import com.sun.jdi.event.VMDeathEvent;
-import com.sun.jdi.event.VMDisconnectEvent;
-import com.sun.jdi.event.VMStartEvent;
-import com.sun.jdi.event.ClassPrepareEvent;
-import com.sun.jdi.request.BreakpointRequest;
-import com.sun.jdi.request.EventRequestManager;
-import com.sun.jdi.request.ExceptionRequest;
-import com.sun.jdi.request.ClassPrepareRequest;
-import groovy.lang.Binding;
-import groovy.lang.Closure;
-import groovy.lang.GroovyShell;
-import org.codehaus.groovy.control.CompilerConfiguration;
-import org.codehaus.groovy.runtime.GroovyCategorySupport;
-
-import java.io.Closeable;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.EnumSet;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.codehaus.groovy.control.CompilerConfiguration
+import com.sun.jdi.IncompatibleThreadStateException
+import com.sun.jdi.request.EventRequestManager
+import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.event.ThreadStartEvent
+import com.sun.jdi.event.ThreadDeathEvent
+import com.sun.jdi.event.VMStartEvent
+import com.sun.jdi.event.VMDeathEvent
+import com.sun.jdi.event.VMDisconnectEvent
+import com.sun.jdi.VirtualMachine
+import com.sun.jdi.event.EventQueue
+import com.sun.jdi.event.Event
+import com.sun.jdi.VMDisconnectedException
+import com.sun.jdi.ThreadReference
+import com.sun.jdi.request.ClassPrepareRequest
+import com.sun.jdi.event.ClassPrepareEvent
+import com.sun.jdi.event.EventSet
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.request.BreakpointRequest
+import com.sun.jdi.event.BreakpointEvent
+import com.sun.jdi.request.ExceptionRequest
+import com.sun.jdi.event.ExceptionEvent
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.Location
+import java.util.logging.Logger
 
 /**
- * Debugger view of a Java virtual machine.
+ * Debugger view of a Virtual machine. 
  *
  * @author Kohsuke Kawaguchi
  */
@@ -132,7 +118,7 @@ public class VM implements Closeable {
                 es.resume();
             }
         } catch (VMDisconnectedException e) {
-            LOGGER.log(Level.INFO, VM.this.vm.name()+" disconnected");
+            LOGGER.log(Level.INFO, vm.name()+" disconnected");
         } finally {
             CURRENT.set(old);
         }
@@ -141,12 +127,10 @@ public class VM implements Closeable {
     public ClassPrepareRequest classPrepare(String name, final Closure c) {
         ClassPrepareRequest r = req.createClassPrepareRequest();
         r.addClassFilter(name);
-        HANDLER.put(r,new EventHandler<ClassPrepareEvent>() {
-            public void on(ClassPrepareEvent event) {
-                c.setDelegate(event.thread());
-                c.call(event.referenceType());
-            }
-        });
+        HANDLER[r] = { ClassPrepareEvent event ->
+            c.setDelegate(event.thread());
+            c.call(event.referenceType());
+        } as EventHandler;
         r.enable();
         return r;
     }
@@ -162,7 +146,7 @@ public class VM implements Closeable {
     private void handleThreadDeath(ThreadDeathEvent tde) {
         threads.onThreadEnd(tde);
     }
-    
+
     /**
      * Sets a break point at the specified line in the specified class, and if it hits,
      * invoke the closure.
@@ -172,12 +156,10 @@ public class VM implements Closeable {
         List<BreakpointRequest> bps = new ArrayList<BreakpointRequest>();
         for (Location loc : math.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
-            HANDLER.put(bp, new EventHandler<BreakpointEvent>() {
-                public void on(BreakpointEvent e) {
-                    c.setDelegate(new BreakpointDelegate(e));
-                    c.call();
-                }
-            });
+            HANDLER[bp] = { BreakpointEvent e ->
+                c.setDelegate(new BreakpointDelegate(e));
+                c.call();
+            } as EventHandler;
             bp.enable();
             bps.add(bp);
         }
@@ -198,12 +180,10 @@ public class VM implements Closeable {
         if (modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
-        HANDLER.put(q,new EventHandler<ExceptionEvent>() {
-            public void on(ExceptionEvent e) {
-                c.setDelegate(e.thread());
-                c.call(e.exception());
-            }
-        });
+        HANDLER[q] = { ExceptionEvent e ->
+            c.setDelegate(e.thread());
+            c.call(e.exception());
+        } as EventHandler;
         q.enable();
         return q;
     }
@@ -254,32 +234,25 @@ public class VM implements Closeable {
         vm.dispose();
     }
 
+    private VM _this() {
+        return this;
+    }
+
     public void execute(final InputStream script) throws InterruptedException {
-        try {
-            // make JDICategory available by default
-            GroovyCategorySupport.use(JDICategory.class, new Closure(this) {
-                public Object call() {
-                    try {
-                        CompilerConfiguration cc = new CompilerConfiguration();
-                        // cc.setScriptBaseClass();
+        // make JDICategory available by default
+        use(JDICategory) {
+            CompilerConfiguration cc = new CompilerConfiguration();
+            // cc.setScriptBaseClass();
 
-                        Binding binding = new Binding();
-                        binding.setVariable("vm",VM.this);
+            Binding binding = new Binding();
+            binding.setVariable("vm",_this());
 
-                        GroovyShell groovy = new GroovyShell(binding,cc);
+            GroovyShell groovy = new GroovyShell(binding,cc);
 //                        InputStream res = getClass().getClassLoader().getResourceAsStream("register.groovy");
 //                        groovy.parse(res).run();
 
-                        groovy.parse(script).run();
-                        dispatchEvents();
-                        return null;
-                    } catch (InterruptedException e) {
-                        throw new TunnelException(e);
-                    }
-                }
-            });
-        } catch (TunnelException e) {
-            throw (InterruptedException)e.getCause();
+            groovy.parse(script).run();
+            dispatchEvents();
         }
     }
 
@@ -323,12 +296,6 @@ public class VM implements Closeable {
      */
     public static VM current() {
         return CURRENT.get();
-    }
-
-    private static final class TunnelException extends RuntimeException {
-        private TunnelException(Throwable cause) {
-            super(cause);
-        }
     }
 
     private static final Logger LOGGER = Logger.getLogger(VM.class.getName());

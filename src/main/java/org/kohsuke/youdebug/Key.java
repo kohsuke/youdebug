@@ -25,4 +25,15 @@ class Key<T> {
     public void put(EventRequest e, T value) {
         e.putProperty(this,value);
     }
+
+//
+// groovy binding
+//
+    public void putAt(EventRequest e, T value) {
+        put(e,value);
+    }
+
+    public T getAt(EventRequest e) {
+        return get(e);
+    }
 }
