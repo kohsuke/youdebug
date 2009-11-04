@@ -1,3 +1,3 @@
-vm.breakpoint(vm.loadClass("UCPTest"),7) {
+vm.breakpoint("SubStringTest",7) {
     println "s="+vars.s;
 }
