@@ -1,16 +1,17 @@
 package org.kohsuke.youdebug;
 
-import com.sun.jdi.VirtualMachine;
-import com.sun.jdi.VirtualMachineManager;
 import com.sun.jdi.Bootstrap;
-import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import com.sun.jdi.VirtualMachineManager;
 import com.sun.jdi.connect.AttachingConnector;
 import com.sun.jdi.connect.Connector.Argument;
+import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
+ * Connects to {@link VM} in various ways.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class VMFactory {
