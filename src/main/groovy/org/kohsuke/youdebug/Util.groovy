@@ -1,7 +1,7 @@
-package org.kohsuke.autodbg
+package org.kohsuke.youdebug
 
 import com.sun.management.HotSpotDiagnosticMXBean
-import org.kohsuke.autodbg.VM
+import org.kohsuke.youdebug.VM
 import java.lang.management.ManagementFactory
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.ObjectReference

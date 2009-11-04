@@ -1,4 +1,4 @@
-package org.kohsuke.autodbg;
+package org.kohsuke.youdebug;
 
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;

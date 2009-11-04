@@ -1,4 +1,4 @@
-package org.kohsuke.autodbg;
+package org.kohsuke.youdebug;
 
 /**
  * Indicates that the field assignment failed.

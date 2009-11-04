@@ -1,10 +1,12 @@
 def i=0;
 
 bp = vm.breakpoint("Test",9) {
-    org.kohsuke.autodbg.Util.dumpHeap(vm);
+    org.kohsuke.youdebug.Util.dumpHeap(vm);
+
+    boolean b = flag;
 
     // access local variables. Either use 'vars' to disambiguate, or just use the variable name directly for convenience
-    println "Hit ${vars.flag} : ${flag.class}";
+    println "Hit ${b} : ${flag.class}";
 
     // making a method call
     println "o.answer=${vars.o.answer(1)}";

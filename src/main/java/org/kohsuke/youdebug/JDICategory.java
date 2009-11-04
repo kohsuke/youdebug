@@ -1,4 +1,4 @@
-package org.kohsuke.autodbg;
+package org.kohsuke.youdebug;
 
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
@@ -18,11 +18,9 @@ import com.sun.jdi.Field;
 import com.sun.jdi.Location;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.PrimitiveType;
-import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ArrayReference;
 import static com.sun.jdi.ThreadReference.*;
 import com.sun.jdi.request.EventRequest;
-import com.sun.tools.jdi.ClassLoaderReferenceImpl;
 import groovy.lang.Closure;
 import groovy.lang.GroovyObject;
 import groovy.lang.MetaClass;
@@ -341,7 +339,7 @@ public class JDICategory {
                             throw (RuntimeException) t;
                         if (t instanceof Error)
                             throw (Error) t;
-                        throw new org.kohsuke.autodbg.InvocationException(t);
+                        throw new org.kohsuke.youdebug.InvocationException(t);
                     }
                 }
                 public Class[] getParameterTypes() {

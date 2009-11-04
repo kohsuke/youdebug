@@ -34,7 +34,7 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <configuration>
-          <mainClass>org.kohsuke.autodbg.AutoDebug</mainClass>
+          <mainClass>org.kohsuke.youdebug.AutoDebug</mainClass>
         </configuration>
       </plugin>
     </plugins>

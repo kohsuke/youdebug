@@ -1,4 +1,4 @@
-package org.kohsuke.autodbg;
+package org.kohsuke.youdebug;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

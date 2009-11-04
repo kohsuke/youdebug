@@ -1,4 +1,4 @@
-package org.kohsuke.autodbg;
+package org.kohsuke.youdebug;
 
 import com.sun.jdi.ClassNotLoadedException;
 import com.sun.jdi.ClassType;
