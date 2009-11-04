@@ -27,6 +27,7 @@ import com.sun.jdi.Location
 import java.util.logging.Logger
 import java.lang.management.ManagementFactory
 import com.sun.management.HotSpotDiagnosticMXBean
+import com.sun.jdi.request.EventRequest
 
 /**
  * Debugger view of a Virtual machine. 
@@ -154,9 +155,16 @@ public class VM implements Closeable {
      * invoke the closure.
      */
     public BundledBreakpointRequest breakpoint(String className, int line, final Closure c) throws AbsentInformationException {
-        ReferenceType math = ref(className);
+        return breakpoint(ref(className),line,c);
+    }
+
+    public BundledBreakpointRequest breakpoint(Class className, int line, final Closure c) throws AbsentInformationException {
+        return breakpoint(ref(className),line,c);
+    }
+
+    public BundledBreakpointRequest breakpoint(ReferenceType type, int line, final Closure c) throws AbsentInformationException {
         List<BreakpointRequest> bps = [];
-        for (Location loc : math.locationsOfLine(line)) {
+        for (Location loc : type.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
             HANDLER[bp] = { BreakpointEvent e ->
                 c.setDelegate(new BreakpointDelegate(e));
@@ -233,16 +241,39 @@ public class VM implements Closeable {
      * Instead of just resolving an existing class, load the specified class in the target JVM
      * and returns its reference.
      */
-    public ReferenceType loadClass(Class c) {
+    public ReferenceType loadClass(String c) {
         try {
             return ref(c)
         } catch (IllegalArgumentException e) {
             // force load
             def cl = currentThread.frame(0).location().declaringType().classLoader();
-            def clazz = cl.loadClass(c.name, true)
+            def clazz = cl.loadClass(c, true)
             clazz.getMethods(); // force preparation
             return clazz.reflectedType();
         };
+    }
+
+    public ReferenceType loadClass(Class c) {
+        return loadClass(c.name);
+    }
+
+    /**
+     * Executes the given closure for each class of the given name.
+     *
+     * <p>
+     * The closure gets a {@link ReferenceType} object as a parameter.
+     * It'll be invoked immediately for all the loaded class (of the given name),
+     * and then whenever a new class of the given name is loaded, the closure will be re-invoked.
+     *
+     * @return
+     *      A {@link EventRequest} that can be used to cancel future invcocations.
+     */
+    public EventRequest forEachClass(String className, Closure body) {
+        // for classes that are already loaded
+        for (ReferenceType r : vm.classesByName(className))
+            body.call(r);
+        // for classes to be loaded in the future
+        return classPrepare(className,body);
     }
 
     /**
@@ -268,6 +299,8 @@ public class VM implements Closeable {
             GroovyShell groovy = new GroovyShell(binding,cc);
 
             groovy.parse(script).run();
+
+            vm.resume();
             dispatchEvents();
         }
     }
