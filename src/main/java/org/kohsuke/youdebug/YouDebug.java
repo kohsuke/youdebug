@@ -10,9 +10,14 @@ import java.io.IOException;
 import java.io.FileInputStream;
 import java.net.URLClassLoader;
 import java.net.URL;
+import java.net.ServerSocket;
 import java.lang.reflect.Method;
 
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
+import com.sun.tools.attach.AgentInitializationException;
+import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.VirtualMachine;
 
 /**
  * Entry point.
@@ -24,6 +29,9 @@ public class YouDebug {
     @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="HOST:PORT")
     public String remote = null;
 
+//    @Option(name="-force")
+//    public boolean force = false;
+//
     @Argument
     public File script;
 
@@ -56,10 +64,22 @@ public class YouDebug {
         }
     }
 
-    public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException {
+    public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException, AgentInitializationException, AgentLoadException, AttachNotSupportedException {
         VM vm = null;
-        if (pid>=0)
+        if (pid>=0) {
             vm = VMFactory.connectLocal(pid);
+//            try {
+//            } catch (IOException e) {
+//                VirtualMachine avm = VirtualMachine.attach(String.valueOf(pid));
+//                ServerSocket ss = new ServerSocket();
+//                int port =ss.getLocalPort();
+//                ss.close();
+//                System.out.println("Trying x");
+//                avm.loadAgentLibrary("jdwp","transport=dt_socket,server=y,suspend=n,address=9999");
+//                avm.detach();
+//                remote = "127.0.0.1:"+port;
+//            }
+        }
         if (remote!=null) {
             String[] tokens = remote.split(":");
             if (tokens.length!=2)   throw new CmdLineException("Invalid argument to the -socket option: "+remote);
