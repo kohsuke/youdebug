@@ -63,7 +63,7 @@ public class JDICategory {
     }
 
     /**
-     * Dumps the exception
+     * Dumps the stack trace of an exception.
      *
      * @param out
      *      Either {@link PrintWriter} or {@link PrintStream}.
