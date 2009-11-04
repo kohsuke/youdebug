@@ -25,6 +25,6 @@ vm.classPrepare(IllegalArgumentException.class) { t ->
     println "Loaded the exception breakpoint";
     vm.exceptionBreakpoint(t) { e ->
         println "Caught ${e}";
-        dump(System.err);
+        dumpThread(System.err);
     }
 }

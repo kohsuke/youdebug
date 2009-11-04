@@ -41,6 +41,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * Debugger view of a Java virtual machine.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class VM implements Closeable {
@@ -291,9 +293,29 @@ public class VM implements Closeable {
 
     public void dumpAllThreads(PrintWriter out) throws IncompatibleThreadStateException {
         for (ThreadReference r : vm.allThreads()) {
-            JDICategory.dump(r,out);
+            JDICategory.dumpThread(r,out);
         }
 
+    }
+
+    public void suspend() {
+        vm.suspend();
+    }
+
+    public void resume() {
+        vm.resume();
+    }
+
+    /**
+     * Executes the given closure by suspending the VM. At the exit of the scope the VM will be resumed.
+     */
+    public void withFrozenWorld(Closure c) {
+        vm.suspend();
+        try {
+            c.call();
+        } finally {
+            vm.resume();
+        }
     }
 
     /**

@@ -234,8 +234,8 @@ public class JDICategory {
         return methodMissing(ref,"toString").toString();
     }
 
-    public static void dump(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
-        dump(tr,new PrintWriter(out,true));
+    public static void dumpThread(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
+        dumpThread(tr,new PrintWriter(out,true));
     }
 
     public static String getStatusMessage(ThreadReference tr) {
@@ -255,7 +255,7 @@ public class JDICategory {
     /**
      * Dumps the current thread stack
      */
-    public static void dump(ThreadReference tr, PrintWriter out) throws IncompatibleThreadStateException {
+    public static void dumpThread(ThreadReference tr, PrintWriter out) throws IncompatibleThreadStateException {
         out.printf("\"%s\" %s\n", tr.name(), getStatusMessage(tr));
         int c = tr.frameCount();
         for (int i=0; i<c; i++) {
