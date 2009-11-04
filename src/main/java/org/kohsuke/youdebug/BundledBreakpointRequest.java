@@ -1,10 +1,10 @@
 package org.kohsuke.youdebug;
 
+import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.BreakpointRequest;
-import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.InvalidRequestStateException;
 
 import java.util.List;
@@ -14,12 +14,10 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class BundledBreakpointRequest implements EventRequest {
-
-    private final List<BreakpointRequest> requests;
+public class BundledBreakpointRequest extends BundledEventRequest<BreakpointRequest> implements BreakpointRequest {
 
     /*package*/ BundledBreakpointRequest(List<BreakpointRequest> requests) {
-        this.requests = requests;
+        super(requests);
     }
 
     /**
@@ -58,50 +56,7 @@ public class BundledBreakpointRequest implements EventRequest {
             r.addInstanceFilter(instance);
     }
 
-    public boolean isEnabled() {
-        return one().isEnabled();
-    }
-
-    public void setEnabled(boolean val) {
-        for (BreakpointRequest r : requests)
-            r.setEnabled(val);
-    }
-
-    public void enable() {
-        setEnabled(true);
-    }
-
-    public void disable() {
-        setEnabled(false);
-    }
-
-    public void addCountFilter(int count) {
-        for (BreakpointRequest r : requests)
-            r.addCountFilter(count);
-    }
-
-    public void setSuspendPolicy(int policy) {
-        for (BreakpointRequest r : requests)
-            r.setSuspendPolicy(policy);
-    }
-
-    public int suspendPolicy() {
-        return one().suspendPolicy();
-    }
-
-    public void putProperty(Object key, Object value) {
-        one().putProperty(key,value);
-    }
-
-    public Object getProperty(Object key) {
-        return one().getProperty(key);
-    }
-
-    public VirtualMachine virtualMachine() {
-        return one().virtualMachine();
-    }
-
-    private BreakpointRequest one() {
-        return requests.get(0);
+    public Location location() {
+        return one().location();
     }
 }
