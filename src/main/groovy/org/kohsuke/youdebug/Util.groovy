@@ -1,9 +1,5 @@
 package org.kohsuke.youdebug
 
-import com.sun.management.HotSpotDiagnosticMXBean
-import org.kohsuke.youdebug.VM
-import java.lang.management.ManagementFactory
-import com.sun.jdi.ReferenceType
 import com.sun.jdi.ObjectReference
 
 /**
@@ -26,25 +22,4 @@ public class Util {
         }
     }
 
-    public static ReferenceType loadClass(VM vm, Class c) {
-        try {
-            return vm.ref(c)
-        } catch (IllegalArgumentException e) {
-            // force load
-            def cl = vm.currentThread.frame(0).location().declaringType().classLoader();
-            def clazz = cl.loadClass(c.name, true)
-            clazz.getMethods(); // force preparation
-            return clazz.reflectedType();
-        };
-    }
-
-    public static void dumpHeap(VM vm) {
-        use (JDICategory) {
-            def mf = loadClass(vm,ManagementFactory.class)
-            def server = mf.getPlatformMBeanServer();
-            def bean = mf.newPlatformMXBeanProxy(server,"com.sun.management:type=HotSpotDiagnostic", vm.ref(HotSpotDiagnosticMXBean.class));
-            new File("/tmp/heapdump").delete();
-            bean.dumpHeap("/tmp/heapdump",true);
-        }
-    }
 }

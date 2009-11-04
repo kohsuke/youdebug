@@ -85,9 +85,9 @@ public class VM implements Closeable {
                 EventSet es = q.remove();
                 for (Event e : es) {
                     currentEvent = e;
-                    EventHandler h = HANDLER.get(e);
+                    Closure h = HANDLER.get(e);
                     if (h!=null) {
-                        h.on(e);
+                        h(e);
                         continue;
                     }
 
@@ -130,7 +130,7 @@ public class VM implements Closeable {
         HANDLER[r] = { ClassPrepareEvent event ->
             c.setDelegate(event.thread());
             c.call(event.referenceType());
-        } as EventHandler;
+        };
         r.enable();
         return r;
     }
@@ -153,13 +153,13 @@ public class VM implements Closeable {
      */
     public BundledBreakpointRequest breakpoint(String className, int line, final Closure c) throws AbsentInformationException {
         ReferenceType math = ref(className);
-        List<BreakpointRequest> bps = new ArrayList<BreakpointRequest>();
+        List<BreakpointRequest> bps = [];
         for (Location loc : math.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
             HANDLER[bp] = { BreakpointEvent e ->
                 c.setDelegate(new BreakpointDelegate(e));
                 c.call();
-            } as EventHandler;
+            };
             bp.enable();
             bps.add(bp);
         }
@@ -183,7 +183,7 @@ public class VM implements Closeable {
         HANDLER[q] = { ExceptionEvent e ->
             c.setDelegate(e.thread());
             c.call(e.exception());
-        } as EventHandler;
+        };
         q.enable();
         return q;
     }
@@ -228,6 +228,22 @@ public class VM implements Closeable {
     }
 
     /**
+     * Instead of just resolving an existing class, load the specified class in the target JVM
+     * and returns its reference.
+     */
+    public ReferenceType loadClass(Class c) {
+        try {
+            return ref(c)
+        } catch (IllegalArgumentException e) {
+            // force load
+            def cl = currentThread.frame(0).location().declaringType().classLoader();
+            def clazz = cl.loadClass(c.name, true)
+            clazz.getMethods(); // force preparation
+            return clazz.reflectedType();
+        };
+    }
+
+    /**
      * Shuts down the connection.
      */
     public void close() {
@@ -248,8 +264,6 @@ public class VM implements Closeable {
             binding.setVariable("vm",_this());
 
             GroovyShell groovy = new GroovyShell(binding,cc);
-//                        InputStream res = getClass().getClassLoader().getResourceAsStream("register.groovy");
-//                        groovy.parse(res).run();
 
             groovy.parse(script).run();
             dispatchEvents();
@@ -291,6 +305,14 @@ public class VM implements Closeable {
         }
     }
 
+    public void dumpHeap() {
+        def mf = loadClass(ManagementFactory.class)
+        def server = mf.getPlatformMBeanServer();
+        def bean = mf.newPlatformMXBeanProxy(server,"com.sun.management:type=HotSpotDiagnostic", ref(HotSpotDiagnosticMXBean.class));
+        new File("/tmp/heapdump").delete();
+        bean.dumpHeap("/tmp/heapdump",true);
+    }
+
     /**
      * Can be called during event dispatching to obtain the current {@link VM} instance.
      */
@@ -300,7 +322,7 @@ public class VM implements Closeable {
 
     private static final Logger LOGGER = Logger.getLogger(VM.class.getName());
 
-    /*package*/ static final Key<EventHandler> HANDLER = new Key<EventHandler>(EventHandler.class);
+    /*package*/ static final Key<Closure> HANDLER = new Key<Closure>(Closure.class);
 
     public static final ExceptionBreakpointModifier CAUGHT = ExceptionBreakpointModifier.CAUGHT;
     public static final ExceptionBreakpointModifier UNCAUGHT = ExceptionBreakpointModifier.UNCAUGHT;
