@@ -312,8 +312,6 @@ public class VM implements Closeable {
             GroovyShell groovy = new GroovyShell(binding,cc);
 
             groovy.parse(script).run();
-
-            vm.resume();
             dispatchEvents();
         }
     }
