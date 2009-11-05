@@ -44,6 +44,13 @@
                   "target/generated-sources/groovy-stubs/main/org/kohsuke/youdebug/JDICategory.java"
                 );
               </source>
+              <classpath>
+                <element>
+                  <groupId>com.thoughtworks.qdox</groupId>
+                  <artifactId>qdox</artifactId>
+                  <version>1.6.3</version>
+                </element>
+              </classpath>
             </configuration>
           </execution>
         </executions>

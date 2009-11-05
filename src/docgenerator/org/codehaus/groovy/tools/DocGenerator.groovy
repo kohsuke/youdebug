@@ -11,7 +11,7 @@ import java.util.*
  *
  * @author Guillaume Laforge, John Wilson, Bernhard Huber, Paul King
  */
- @Grab(group="com.thoughtworks.qdox",module="qdox",version="1.6.3")
+// @Grab(group="com.thoughtworks.qdox",module="qdox",version="1.6.3")
 class DocGenerator {
     private static final String PRIMITIVE_TYPE_PSEUDO_PACKAGE = 'primitive-types'
     private final String TITLE = "Groovy JDK"
@@ -298,7 +298,8 @@ class DocGenerator {
 
     def createTemplate(templateEngine, resourceFile) {
 //        def resourceUrl = getClass().getClassLoader().getResource(resourceFile)
-        def resourceUrl = getClass().getResource(resourceFile)
+//        def resourceUrl = getClass().getResource(resourceFile)
+        def resourceUrl = new File("src/docgenerator/org/codehaus/groovy/tools/${resourceFile}")
         return templateEngine.createTemplate(resourceUrl.text)
     }
 
@@ -355,7 +356,7 @@ class DocGenerator {
      * Main entry point.
      */
     static void main(args) {
-        def outFolder = new File("target/html/groovy-jdk")
+        def outFolder = new File("target/site/jdi+apidocs")
         outFolder.mkdirs()
         def start = System.currentTimeMillis()
         def srcFiles = args.collect {new File(it); } // args.collect {getSourceFile(it)}
