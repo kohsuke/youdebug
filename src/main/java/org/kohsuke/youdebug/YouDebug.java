@@ -15,6 +15,9 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Entry point.
@@ -31,6 +34,13 @@ public class YouDebug {
 //
     @Argument
     public File script;
+
+    public int debugLevel=0;
+
+    @Option(name="-debug",usage="Increase the debug output level. Specify multiple times to get more detailed logging")
+    public void setDebugLevel(boolean b) {
+        debugLevel++;
+    }
 
     public static void main(String[] args) throws Exception {
         // locate tools.jar first
@@ -62,6 +72,20 @@ public class YouDebug {
     }
 
     public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException, AgentInitializationException, AgentLoadException, AttachNotSupportedException {
+        if (debugLevel>0) {
+            ConsoleHandler h = new ConsoleHandler();
+            h.setLevel(Level.ALL);
+            Logger logger = Logger.getLogger("org.kohsuke.youdebug");
+            Level lv;
+            switch (debugLevel) {
+            case 1:     lv = Level.FINE; break;
+            case 2:     lv = Level.FINER; break;
+            default:    lv = Level.FINEST; break;
+            }
+            logger.setLevel(lv);
+            logger.addHandler(h);
+        }
+
         VM vm = null;
         if (pid>=0) {
             vm = VMFactory.connectLocal(pid);

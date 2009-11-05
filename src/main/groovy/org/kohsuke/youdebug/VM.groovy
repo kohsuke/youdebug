@@ -88,8 +88,8 @@ public class VM implements Closeable {
             while (true) {
                 EventSet es = q.remove();
                 for (Event e : es) {
-                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.fine("Received event "+e);
+                    if (LOGGER.isLoggable(Level.FINER))
+                        LOGGER.finer("Received event "+e);
 
                     currentEvent = e;
                     Closure h = HANDLER.get(e);
@@ -107,15 +107,15 @@ public class VM implements Closeable {
                         continue;
                     }
                     if (e instanceof VMStartEvent) {
-                        LOGGER.info("Application started");
+                        LOGGER.fine("Application started");
                         continue;
                     }
                     if (e instanceof VMDeathEvent) {
-                        LOGGER.info("Application exited");
+                        LOGGER.fine("Application exited");
                         return; // peacefully terminate the execution
                     }
                     if (e instanceof VMDisconnectEvent) {
-                        LOGGER.info("Debug session has disconnected");
+                        LOGGER.fine("Debug session has disconnected");
                         return; // peacefully terminate the execution
                     }
 
