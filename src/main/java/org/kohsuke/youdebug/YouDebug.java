@@ -1,23 +1,20 @@
 package org.kohsuke.youdebug;
 
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.Argument;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.net.URLClassLoader;
-import java.net.URL;
-import java.net.ServerSocket;
-import java.lang.reflect.Method;
-
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /**
  * Entry point.
@@ -26,7 +23,7 @@ public class YouDebug {
     @Option(name="-pid",usage="Attaches to the local process of the given PID")
     public int pid = -1;
 
-    @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="HOST:PORT")
+    @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="[HOST:]PORT")
     public String remote = null;
 
 //    @Option(name="-force")
@@ -82,6 +79,7 @@ public class YouDebug {
         }
         if (remote!=null) {
             String[] tokens = remote.split(":");
+            if (tokens.length==1)   tokens = new String[]{"localhost",tokens[0]};
             if (tokens.length!=2)   throw new CmdLineException("Invalid argument to the -socket option: "+remote);
             vm = VMFactory.connectRemote(tokens[0],Integer.valueOf(tokens[1]));
         }
