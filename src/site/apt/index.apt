@@ -46,3 +46,16 @@ breakpoint("com.acme.SubStringTest",7) {
   println "s="+s;
 }
 --------------
+
+  Now run the program with the debugger option:
+
+-------------
+$ java -agentlib:jdwp=transport=dt_socket,server=y,address=8000 SubStringTest
+-------------
+
+
+  Then start YouDebug from a separate terminal:
+
+-------------
+$ java -jar youdebug.jar -socket localhost:8000 
+-------------
