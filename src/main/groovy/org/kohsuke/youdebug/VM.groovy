@@ -87,7 +87,11 @@ public class VM implements Closeable {
         try {
             while (true) {
                 EventSet es = q.remove();
+                println "policy=${es.suspendPolicy()}";
                 for (Event e : es) {
+//                    if (LOGGER.isLoggable(Level.FINE))
+                        LOGGER.info("Received event "+e);
+
                     currentEvent = e;
                     Closure h = HANDLER.get(e);
                     if (h!=null) {
@@ -122,7 +126,7 @@ public class VM implements Closeable {
                 es.resume();
             }
         } catch (VMDisconnectedException e) {
-            LOGGER.log(Level.INFO, "Tar get JVM  disconnected");
+            LOGGER.log(Level.INFO, "Target JVM  disconnected",e);
         } finally {
             CURRENT.set(old);
         }
@@ -293,6 +297,10 @@ public class VM implements Closeable {
     }
 
     public void execute(final InputStream script) throws InterruptedException {
+        // this makes JDWP retrieves a global 'versionInfo' from the target JVM. Do this while the JVM is suspended,
+        // or else when we do this later, the VM runs a bit, and we can miss events
+        vm.version();
+
         // make JDICategory available by default
         use(JDICategory) {
             CompilerConfiguration cc = new CompilerConfiguration();

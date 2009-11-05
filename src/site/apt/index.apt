@@ -37,7 +37,7 @@ Exception in thread "main" java.lang.StringIndexOutOfBoundsException: String ind
 	at SubStringTest.main(SubStringTest.java:7)
 -------------
 
-  So you know {{{s.substring(5)}}} isn't working, but you want to know the value of the variable 's'.
+  So you know <<<s.substring(5)>>> isn't working, but you want to know the value of the variable 's'.
 
   To do this, you write a YouDebug script. YouDebug scripts are Groovy scripts with some DSL-like syntax sugars specialized for debugging. The following script sets a breakpoint at line 7 of the SubStringTest class, and every time the breakpoint hits, it'll print out the value of the local variable 's'.
 
