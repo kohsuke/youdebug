@@ -54,8 +54,30 @@ $ java -agentlib:jdwp=transport=dt_socket,server=y,address=5005 SubStringTest
 Listening for transport dt_socket at address: 5005
 --------------
 
-  And then you start YouDebug on a separate terminal:
+  And then you start YouDebug on a separate terminal. YouDebug attaches to your program, and your script will eventually produce the value of 's':
 
 --------------
 $ java -jar youdebug.jar -socket 5005 SubStringMonitor.ydb
+s=test
 --------------
+
+
+Features
+
+  YouDebug exposes all the capabilities of the underlying {{{http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi}JDI}}, so your script can do the following things:
+
+  * Break when the execution reaches a specific line, when an exception is thrown, when a field is referenced or updated.
+
+  * Break when a class is loaded/unloaded, a thread is created/destroyed, a method is entered/exited
+
+  * Break when a monitor is waited/contended
+
+  * Evaluate arbitrary expressions in the target JVM (such as field set/get and method calls)
+
+  * List up all the threads, inspect their stack frames, access/modify local variables.
+
+  * Obtain heap dump, print the exception stack trace, and so on.
+  
+  []
+
+  See {{{user-guide.html}the user guide}} for more details about how to script these capabilities.

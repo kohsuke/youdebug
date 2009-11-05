@@ -217,7 +217,14 @@ public class JDICategory {
             LOGGER.fine("Invoking "+name+" on "+c+" with "+ Arrays.asList(args));
 
         List<Value> arguments = Variable.wrapList(c.virtualMachine(), args);
-        return Variable.unwrap(c.invokeMethod( VM.current().getCurrentThread(),
+
+        if (name=="new") {// constructor invocation
+            String n = c.name()
+            return Variable.unwrap(c.newInstance( VM.current().currentThread,
+                    chooseMethod(c,"<init>"/*n.substring(n.lastIndexOf('.')+1)*/,arguments,false),arguments,0));
+        }
+
+        return Variable.unwrap(c.invokeMethod( VM.current().currentThread,
                 chooseMethod(c,name,arguments,true), arguments, 0));
     }
 

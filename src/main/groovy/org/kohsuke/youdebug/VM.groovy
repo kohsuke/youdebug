@@ -29,6 +29,7 @@ import java.lang.management.ManagementFactory
 import com.sun.management.HotSpotDiagnosticMXBean
 import com.sun.jdi.request.EventRequest
 import java.util.logging.Level
+import com.sun.jdi.ObjectReference
 
 /**
  * Debugger view of a Virtual machine. 
@@ -193,7 +194,7 @@ public class VM implements Closeable {
      * }
      * </pre>
      */
-    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
+    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
         // default to all situations, since "none" isn't useful
         if (modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
@@ -206,23 +207,27 @@ public class VM implements Closeable {
         return q;
     }
 
-    public ExceptionRequest exceptionBreakpoint(String exceptionClassName, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
-        return exceptionBreakpoint(ref(exceptionClassName),modifiers,c);
+    public ExceptionRequest exceptionBreakpoint(String className, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
+        def bpreqs = [];
+        def r = forEachClass(className) { ReferenceType t ->
+            bpreqs.add(exceptionBreakpoint(t,modifiers,c));
+        }
+        return new BundledExceptionRequest(r,bpreqs);
     }
 
-    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, final Closure c) {
-        return exceptionBreakpoint(ref(exceptionClass),modifiers,c);
+    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
+        return exceptionBreakpoint(exceptionClass.name,modifiers,c);
     }
 
-    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, final Closure c) {
+    public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
 
-    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, final Closure c) {
+    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
 
-    public ExceptionRequest exceptionBreakpoint(String exceptionClass, final Closure c) {
+    public ExceptionRequest exceptionBreakpoint(String exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
 
@@ -243,6 +248,28 @@ public class VM implements Closeable {
      */
     public ReferenceType ref(Class c) {
         return ref(c.getName());
+    }
+
+    /**
+     * Short hand for {@link #ref(Class)
+     */
+    public ReferenceType _(Class c) {
+        return ref(c);
+    }
+
+    /**
+     * Short hand for {@link #ref(String) 
+     */
+    public ReferenceType _(String c) {
+        return ref(c);
+    }
+
+    public Object _new(Class c, Object... args) {
+        return ref(c).methodMissing("new",args);
+    }
+
+    public Object _new(String c, Object... args) {
+        return ref(c).methodMissing("new",args);
     }
 
     /**
