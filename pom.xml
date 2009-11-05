@@ -21,12 +21,30 @@
         <artifactId>gmaven-plugin</artifactId>
         <executions>
           <execution>
+            <id>gen</id>
             <goals>
               <goal>generateStubs</goal>
               <goal>compile</goal>
-              <goal>generateTestStubs</goal>
-              <goal>testCompile</goal>
+              <!--goal>generateTestStubs</goal>
+              <goal>testCompile</goal-->
             </goals>
+          </execution>
+          <execution>
+            <id>doc-generation</id>
+            <phase>pre-site</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <scriptpath>
+                  <element>${project.basedir}/src/docgenerator</element>
+              </scriptpath>
+              <source>
+                org.codehaus.groovy.tools.DocGenerator.main(
+                  "target/generated-sources/groovy-stubs/main/org/kohsuke/youdebug/JDICategory.java"
+                );
+              </source>
+            </configuration>
           </execution>
         </executions>
       </plugin>
