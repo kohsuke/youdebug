@@ -47,15 +47,15 @@ breakpoint("com.acme.SubStringTest",7) {
 }
 --------------
 
-  Now run the program with the debugger option:
+  Now, you run your target program with the debug option:
 
--------------
-$ java -agentlib:jdwp=transport=dt_socket,server=y,address=8000 SubStringTest
--------------
+--------------
+$ java -agentlib:jdwp=transport=dt_socket,server=y,address=5005 SubStringTest
+Listening for transport dt_socket at address: 5005
+--------------
 
+  And then you start YouDebug on a separate terminal:
 
-  Then start YouDebug from a separate terminal:
-
--------------
-$ java -jar youdebug.jar -socket localhost:8000 
--------------
+--------------
+$ java -jar youdebug.jar -socket 5005 SubStringMonitor.ydb
+--------------

@@ -1,23 +1,23 @@
 package org.kohsuke.youdebug;
 
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.CmdLineParser;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.Argument;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.FileInputStream;
-import java.net.URLClassLoader;
-import java.net.URL;
-import java.net.ServerSocket;
-import java.lang.reflect.Method;
-
 import com.sun.jdi.connect.IllegalConnectorArgumentsException;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
-import com.sun.tools.attach.VirtualMachine;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Entry point.
@@ -26,7 +26,7 @@ public class YouDebug {
     @Option(name="-pid",usage="Attaches to the local process of the given PID")
     public int pid = -1;
 
-    @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="HOST:PORT")
+    @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="[HOST:]PORT")
     public String remote = null;
 
 //    @Option(name="-force")
@@ -35,12 +35,19 @@ public class YouDebug {
     @Argument
     public File script;
 
+    public int debugLevel=0;
+
+    @Option(name="-debug",usage="Increase the debug output level. Specify multiple times to get more detailed logging")
+    public void setDebugLevel(boolean b) {
+        debugLevel++;
+    }
+
     public static void main(String[] args) throws Exception {
         // locate tools.jar first
         String home = System.getProperty("java.home");
         File toolsJar = new File(new File(home), "../lib/tools.jar");
         if (!toolsJar.exists()) {
-            System.err.println("This tool requires a JDK, not just a JRE");
+            System.err.println("This tool requires a JDK, but you are running Java from "+home);
             System.exit(1);
         }
 
@@ -65,6 +72,20 @@ public class YouDebug {
     }
 
     public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException, AgentInitializationException, AgentLoadException, AttachNotSupportedException {
+        if (debugLevel>0) {
+            ConsoleHandler h = new ConsoleHandler();
+            h.setLevel(Level.ALL);
+            Logger logger = Logger.getLogger("org.kohsuke.youdebug");
+            Level lv;
+            switch (debugLevel) {
+            case 1:     lv = Level.FINE; break;
+            case 2:     lv = Level.FINER; break;
+            default:    lv = Level.FINEST; break;
+            }
+            logger.setLevel(lv);
+            logger.addHandler(h);
+        }
+
         VM vm = null;
         if (pid>=0) {
             vm = VMFactory.connectLocal(pid);
@@ -82,6 +103,7 @@ public class YouDebug {
         }
         if (remote!=null) {
             String[] tokens = remote.split(":");
+            if (tokens.length==1)   tokens = new String[]{"localhost",tokens[0]};
             if (tokens.length!=2)   throw new CmdLineException("Invalid argument to the -socket option: "+remote);
             vm = VMFactory.connectRemote(tokens[0],Integer.valueOf(tokens[1]));
         }
