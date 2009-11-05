@@ -31,6 +31,8 @@ import com.sun.jdi.request.EventRequest
 import java.util.logging.Level
 import com.sun.jdi.request.MethodEntryRequest
 import com.sun.jdi.event.MethodEntryEvent
+import com.sun.jdi.request.MethodExitRequest
+import com.sun.jdi.event.MethodExitEvent
 
 /**
  * Debugger view of a Virtual machine. 
@@ -136,7 +138,7 @@ public class VM implements Closeable {
     public ClassPrepareRequest classPrepare(String name, final Closure c) {
         ClassPrepareRequest r = req.createClassPrepareRequest();
         r.addClassFilter(name);
-        HANDLER[r] = { ClassPrepareEvent event ->
+        registerHandler(r) { ClassPrepareEvent event ->
             c.setDelegate(event.thread());
             c.call(event.referenceType());
         };
@@ -161,7 +163,7 @@ public class VM implements Closeable {
      * invoke the closure.
      */
     public BundledBreakpointRequest breakpoint(String className, int line, final Closure body) throws AbsentInformationException {
-        def bpreqs = [];
+        List<BreakpointRequest> bpreqs = [];
         def r = forEachClass(className) { ReferenceType t ->
             bpreqs.add(breakpoint(t,line,body));
         }
@@ -176,14 +178,14 @@ public class VM implements Closeable {
         List<BreakpointRequest> bps = [];
         for (Location loc : type.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
-            HANDLER[bp] = { BreakpointEvent e ->
+            registerHandler(bp) { BreakpointEvent e ->
                 c.setDelegate(e.thread());
                 c.call();
             };
             bp.enable();
             bps.add(bp);
         }
-        return new BundledBreakpointRequest(bps);
+        return new BundledBreakpointRequest(null,bps);
     }
 
     /**
@@ -200,7 +202,7 @@ public class VM implements Closeable {
         if (modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
-        HANDLER[q] = { ExceptionEvent e ->
+        registerHandler(q) { ExceptionEvent e ->
             c.setDelegate(e.thread());
             c.call(e.exception());
         };
@@ -248,15 +250,43 @@ public class VM implements Closeable {
 
     private MethodEntryRequest createMethodEntryRequest(String methodName, Closure body) {
         MethodEntryRequest q = req.createMethodEntryRequest()
-        HANDLER[q] = {MethodEntryEvent e ->
+        registerHandler(q) { MethodEntryEvent e ->
             if (e.method().name() == methodName) {
                 body.setDelegate(e.thread());
-                body.call(e.method());
+                body.call();
             }
         }
-        return q
+        return q;
     }
 
+    public MethodExitRequest methodExitBreakpoint(ReferenceType type, String methodName, Closure body) {
+        MethodExitRequest q = createMethodExitRequest(methodName,body);
+        q.addClassFilter(type);
+        q.enable();
+        return q;
+    }
+
+    public MethodExitRequest methodExitBreakpoint(String type, String methodName, Closure body) {
+        MethodExitRequest q = createMethodExitRequest(methodName,body);
+        q.addClassFilter(type);
+        q.enable();
+        return q;
+    }
+
+    private MethodExitRequest createMethodExitRequest(String methodName, Closure body) {
+        MethodExitRequest q = req.createMethodExitRequest()
+        registerHandler(q) { MethodExitEvent e ->
+            if (e.method().name() == methodName) {
+                body.setDelegate(e.thread());
+                body.call(e.returnValue());
+            }
+        }
+        return q;
+    }
+
+    private void registerHandler(EventRequest q, Closure body) {
+        HANDLER[q] = body;
+    }
 
     /**
      * Resolves a class by the name.
@@ -330,7 +360,7 @@ public class VM implements Closeable {
      * @return
      *      A {@link EventRequest} that can be used to cancel future invcocations.
      */
-    public EventRequest forEachClass(String className, Closure body) {
+    public ClassPrepareRequest forEachClass(String className, Closure body) {
         // for classes that are already loaded
         for (ReferenceType r : vm.classesByName(className))
             body.call(r);
