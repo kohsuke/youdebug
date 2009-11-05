@@ -40,7 +40,7 @@ public class YouDebug {
         String home = System.getProperty("java.home");
         File toolsJar = new File(new File(home), "../lib/tools.jar");
         if (!toolsJar.exists()) {
-            System.err.println("This tool requires a JDK, not just a JRE");
+            System.err.println("This tool requires a JDK, but you are running Java from "+home);
             System.exit(1);
         }
 
