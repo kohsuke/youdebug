@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="YouDebug">
+  <!--<bannerLeft>-->
+    <!--<name>Maven</name>-->
+    <!--<src>http://maven.apache.org/images/apache-maven-project.png</src>-->
+    <!--<href>http://maven.apache.org/</href>-->
+  <!--</bannerLeft>-->
+  <!--<bannerRight>-->
+    <!--<src>http://maven.apache.org/images/maven-small.gif</src>-->
+  <!--</bannerRight>-->
+  <body>
+    <menu name="YouDebug">
+      <item name="Introduction" href="index.html"/>
+      <item name="Download" href="download.html"/>
+      <item name="User Guide" href="user-guide.html"/>
+    </menu>
+
+    <menu name="References">
+      <item name="JDI Enhancements" href="jdi+apidocs/index.html"/>
+      <item name="JDI" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi"/>
+    </menu>
+
+    <menu ref="reports"/>
+
+  </body>
+</project>
