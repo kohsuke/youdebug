@@ -14,7 +14,7 @@ import java.util.*
 // @Grab(group="com.thoughtworks.qdox",module="qdox",version="1.6.3")
 class DocGenerator {
     private static final String PRIMITIVE_TYPE_PSEUDO_PACKAGE = 'primitive-types'
-    private final String TITLE = "Groovy JDK"
+    private final String TITLE = "YouDebug JDI Enhancements"
     def sourceFiles = []
     File outputFolder
     JavaDocBuilder builder
