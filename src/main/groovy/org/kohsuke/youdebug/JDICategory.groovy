@@ -211,10 +211,12 @@ public class JDICategory {
      * Obtains the variable visible from the stack frame.
      */
     private static Variable getVariable(StackFrame frame, String name) {
+        name = unescape(name);
         try {
             // method arguments by index
-            if (name.startsWith("#"))
-                return Variable.fromMethodArgument(frame,Integer.parseInt(name.substring(1)));
+            char ch = name.charAt(0)
+            if ('0'<=ch && ch<='9')
+                return Variable.fromMethodArgument(frame,Integer.parseInt(name));
         } catch (NumberFormatException e) {
             // fall through
         } catch (LinkageError e) {
