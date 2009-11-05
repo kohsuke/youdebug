@@ -11,6 +11,7 @@ import java.util.*
  *
  * @author Guillaume Laforge, John Wilson, Bernhard Huber, Paul King
  */
+ @Grab(group="com.thoughtworks.qdox",module="qdox",version="1.6.3")
 class DocGenerator {
     private static final String PRIMITIVE_TYPE_PSEUDO_PACKAGE = 'primitive-types'
     private final String TITLE = "Groovy JDK"
@@ -357,8 +358,9 @@ class DocGenerator {
         def outFolder = new File("target/html/groovy-jdk")
         outFolder.mkdirs()
         def start = System.currentTimeMillis()
-        def srcFiles = args.collect {getSourceFile(it)}
-        def srcFileNames = args.collect {getSourceFile(it).canonicalPath}
+        def srcFiles = args.collect {new File(it); } // args.collect {getSourceFile(it)}
+        def srcFileNames = srcFiles*.canonicalPath
+ /*
         try {
             Class[] classes = DefaultGroovyMethods.additionals
             classes.each {
@@ -377,6 +379,7 @@ class DocGenerator {
             System.err.println mpe.message
             // no call site change available, so ignore it
         }
+*/
         def docGen = new DocGenerator(srcFiles, outFolder)
         docGen.generateNew()
         def end = System.currentTimeMillis()
