@@ -87,10 +87,9 @@ public class VM implements Closeable {
         try {
             while (true) {
                 EventSet es = q.remove();
-                println "policy=${es.suspendPolicy()}";
                 for (Event e : es) {
-//                    if (LOGGER.isLoggable(Level.FINE))
-                        LOGGER.info("Received event "+e);
+                    if (LOGGER.isLoggable(Level.FINE))
+                        LOGGER.fine("Received event "+e);
 
                     currentEvent = e;
                     Closure h = HANDLER.get(e);
