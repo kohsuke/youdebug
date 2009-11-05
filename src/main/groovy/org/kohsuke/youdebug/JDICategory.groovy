@@ -22,11 +22,11 @@ import com.sun.jdi.Value
 import com.sun.jdi.request.EventRequest
 import java.util.logging.Logger
 import org.kohsuke.youdebug.NoSuchMethodException
-import org.kohsuke.youdebug.StackFrameVariables
 import org.kohsuke.youdebug.VM
 import org.kohsuke.youdebug.Variable
 import static com.sun.jdi.ThreadReference.*
 import static java.util.logging.Level.FINE
+import com.sun.jdi.LocalVariable
 
 /**
  * Method augmentation on top of JDI for Groovy
@@ -39,20 +39,6 @@ public class JDICategory {
      */
     public static void delete(EventRequest req) {
         req.virtualMachine().eventRequestManager().deleteEventRequest(req);
-    }
-
-    /**
-     * Gets the variables visible in this stack frame in a Groovy-friendly fashion.
-     */
-    public static StackFrameVariables getVars(StackFrame f) {
-        return new StackFrameVariables(f);
-    }
-
-    /**
-     * Gets the variables visible at that top of the stack frame of the given thread.
-     */
-    public static StackFrameVariables getVars(ThreadReference tr) throws IncompatibleThreadStateException {
-        return new StackFrameVariables(tr.frame(0));
     }
 
     /**
@@ -208,6 +194,60 @@ public class JDICategory {
     }
 
     /**
+     * Read variables visible from the stack frame
+     */
+    public static Object propertyMissing(StackFrame frame, String name) {
+        return getVariable(frame,name).getUnwrapped();
+    }
+
+    /**
+     * Set variables visible from the stack trace
+     */
+    public static void propertyMissing(StackFrame frame, String name, Object value) {
+        getVariable(frame,name).set(value);
+    }
+
+    /**
+     * Obtains the variable visible from the stack frame.
+     */
+    private static Variable getVariable(StackFrame frame, String name) {
+        try {
+            // method arguments by index
+            if (name.startsWith("#"))
+                return Variable.fromMethodArgument(frame,Integer.parseInt(name.substring(1)));
+        } catch (NumberFormatException e) {
+            // fall through
+        } catch (LinkageError e) {
+            // fall through
+        }
+
+        // local variable?
+        try {
+            LocalVariable v = frame.visibleVariableByName(name);
+            if (v!=null)
+                return Variable.fromLocalVariable(frame,v);
+        } catch (AbsentInformationException e) {
+            // no debug information. fall through.
+        }
+
+        // instance field?
+        ObjectReference _this = frame.thisObject();
+        if (_this!=null) {
+            Field fi = _this.referenceType().fieldByName(name);
+            if (fi!=null)
+                return Variable.fromField(_this,fi);
+        }
+
+        // static field?
+        ReferenceType t = frame.location().declaringType();
+        Field fi = t.fieldByName(name);
+        if (fi!=null && fi.isStatic())
+            return Variable.fromField(t,fi);
+
+        return null;
+    }
+
+    /**
      * Static method invocation from {@link ClassType}.
      */
     public static Object methodMissing(ClassType c, String name, Object... args) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
@@ -219,9 +259,8 @@ public class JDICategory {
         List<Value> arguments = Variable.wrapList(c.virtualMachine(), args);
 
         if (name=="new") {// constructor invocation
-            String n = c.name()
             return Variable.unwrap(c.newInstance( VM.current().currentThread,
-                    chooseMethod(c,"<init>"/*n.substring(n.lastIndexOf('.')+1)*/,arguments,false),arguments,0));
+                    chooseMethod(c,"<init>",arguments,false),arguments,0));
         }
 
         return Variable.unwrap(c.invokeMethod( VM.current().currentThread,
@@ -267,10 +306,6 @@ public class JDICategory {
         return methodMissing(ref,"toString").toString();
     }
 
-    public static void dumpThread(ThreadReference tr, PrintStream out) throws IncompatibleThreadStateException {
-        dumpThread(tr,new PrintWriter(out,true));
-    }
-
     public static String getStatusMessage(ThreadReference tr) {
         int st = tr.status();
         switch (st) {
@@ -288,7 +323,7 @@ public class JDICategory {
     /**
      * Dumps the current thread stack
      */
-    public static void dumpThread(ThreadReference tr, PrintWriter out) throws IncompatibleThreadStateException {
+    public static void dumpThread(ThreadReference tr, out) throws IncompatibleThreadStateException {
         out.printf("\"%s\" %s\n", tr.name(), getStatusMessage(tr));
         int c = tr.frameCount();
         for (int i=0; i<c; i++) {
@@ -305,6 +340,20 @@ public class JDICategory {
                 out.println();
             }
         }
+    }
+
+    /**
+     * Read variables visible from the top stack frame of this thread
+     */
+    public static Object propertyMissing(ThreadReference t, String name) {
+        return propertyMissing(t.frame(0),name);
+    }
+
+    /**
+     * Set variables visible from the top stack frame of this thread
+     */
+    public static void propertyMissing(ThreadReference t, String name, Object value) {
+        propertyMissing(t.frame(0),name,value);
     }
 
     private static final Logger LOGGER = Logger.getLogger(JDICategory.class.getName());

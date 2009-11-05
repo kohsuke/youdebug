@@ -1,0 +1,195 @@
+    ---------------
+    User Guide
+    ---------------
+
+  YouDebug script is evaluated as a Groovy script, so you can do all the normal things {{{http://groovy.codehaus.org}Groovy}} allows you to do, such as defining methods, calling other Java libraries, and so on. On top of that, YouDebug adds two major mechanisms:
+
+Defining Breakpoints
+
+  Breakpoints are event callback handlers that are invoked when a certain event occurs in the target JVM. You can create breakpoints by calling breakpoint mtehods on the 'vm' object. These methods takes a closure that gets invoked when the event occurs, and they often takes additional arguments to control the nature of the breakpoint.
+
+  The following code defines a breakpoint on line 7 of the <<<org.acme.SubStringTest.java>>> (or whichever source file this class is defined in:)
+
+------------
+vm.breakpoint("org.acme.SubStringTest",7) {
+  println "I'm at SubStringTest.java line 7";
+}
+------------
+
+  Some breakpoints have parameters for closures. For example, an exception breakpoint takes an object that represents the exception being thrown in the target JVM:
+
+------------
+vm.exceptionBreakpoint("java.lang.IllegalArgumentException") { e ->
+  e.dumpStackTrace(System.out);
+}
+------------
+
+  In YouDebug scripts, you often need to deal with classes in the target JVM. You can always use the string representation of the class name, but you can also use the <<<java.lang.Class>>> object in the YouDebug process, if it's available (that is, either those classes are the ones defined in JavaSE, or you've added your classes into the classpath of YouDebug invocation.) So the above code can be written a little more concisely as this:
+
+------------
+vm.exceptionBreakpoint(IllegalArgumentException.class) { e ->
+  e.dumpStackTrace(System.out);
+}
+------------
+
+  ... or, by further using Groovy's shorthand for omitting the ".class" portion, you can do:
+
+------------
+vm.exceptionBreakpoint(IllegalArgumentException) { e ->
+  e.dumpStackTrace(System.out);
+}
+------------
+
+* Dynamically Defining/Updating Breakpoints
+
+  Breakpoint definitions are not limited to the top level. You can define new ones at any time, for example from another event handler. In the following example, an exception breakpoint is added once the execution hits <<<SubStringTest>>> line 7:
+
+------------
+vm.breakpoint("org.acme.SubStringTest",7) {
+  vm.exceptionBreakpoint(IllegalArgumentException) { e ->
+    e.dumpStackTrace(System.out);
+  }
+}
+------------
+
+  Breakpoint definitions return an object that represents the newly defined breakpoint. This object can be kept around to update the breakpoint --- such as temporarily disabling them, adding additional filters, or cancelling them. As an example, the following code activates an exception breakpoint only during the target program is executing between line 7 and 14.
+
+------------
+vm.breakpoint("org.acme.SubStringTest",7) {
+  def ebp = vm.exceptionBreakpoint(IllegalArgumentException) { e ->
+    e.dumpStackTrace(System.out);
+  }
+  def x = vm.breakpoint("org.acme.SubStringTest",14) {
+    // cancel the exception breakpoint and this breakpoint
+    ebp.delete();
+    x.delete();
+  }
+}
+------------
+
+Evaluating Expressions
+
+  In various places in YouDebug, proxy objects are used to represent objects in the target JVM. For example, in the above example, the variable 'e' refers to an object in the YouDebug JVM, which acts as a proxy to the exception object in the target JVM.
+
+  You can invoke methods and access fields on these objects, and they'll translate into the corresponding method invocations and field access on the target JVM. For example, the following code evaluates "e.getMessage()" on the thrown exception and prints the resutling String on the YouDebug JVM. Parameters and arguments are marshalled/unmarshalled. In this way, you can transparently access data in the target JVM.
+
+------------
+vm.exceptionBreakpoint(IllegalArgumentException) { e ->
+  String x = e.getMessage();
+  println x;
+}
+------------
+
+  Since the proxy object is still a Java object, some of the method calls (most notably <<<equals>>> and <<<hashCode>>>) are interpreted locally, not remotely. To invoke these methods on remote objects, instead on proxy objects, escape them by prepending it with '@', like this:
+
+------------
+x.'@hashCode'()   // calls hashCode() on the remote object
+x.hashCode()      // calls hashCode() on the proxy object
+------------
+
+  In addition, proxy objects implement {{{http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ObjectReference.html}ObjectReference}} from JDI, so methods defined in those also need to be escaped.
+
+* Static methods/fields
+
+  Static methods/fields can be invoked/accessed on a proxy object to {{{http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ReferenceType.html}the remote type}}, much like how you invoke methods/fields on an object reference:
+
+------------
+vm.breakpoint("Main",5) {
+  // this will print a message in the target JVM
+  vm.ref("java.lang.System").out.println("Hello from debugger");
+  
+  // '_' is a synonym of 'ref'. Plus you can use a Class object instead of name,
+  // hence the following equivalent code is bit shorter
+  vm._(System).out.println("Hello from debugger");
+}
+------------
+
+* Creating Instances
+
+  To create a new object instance, use the "_new" call (the first parameter can be either <<<String>>> or <<<Class>>>). Or if you already have a proxy object to type, use the "@new" syntax:
+
+------------
+def f = vm._new(File,"/tmp/hello");
+println f.exists()
+
+vm.exceptionBreakpoint(IllegalArgumentException) { e ->
+  // create another instance of the same exception type. this is a contrived example.
+  // 'type()' gets you a type proxy from an instance proxy.
+  def x = e.type()."@new"();
+}
+
+// or similarly,
+vm._(File)."@new"("/tmp/hello");
+------------
+
+
+
+
+Inspecting/Manipulating Stack Frames
+
+  When a breakpoint is hit and the target JVM is suspended, you can walk the stack frames of threads and inspect variables. You do through {{{http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ThreadReference.html}ThreadReference}}.
+  
+  For example, in the following code, the debugger prints the visible variable 'i' from the current stack frame of the target JVM. A 'visible variable' includes local variables, instance fields, and then static fields in this order.
+
+------------
+vm.breakpoint("Main",5) {
+  println i;
+}
+------------
+
+  This is actually just a short-hand for <<<delegate.i>>> (where <<<delegate>>> is a reserved variable in Groovy to point to the closure delegate.) <<<delegate>>> points to the thread that hit the breakpoint. The short form is concise, but a verbose form can be useful for disambiguation.
+
+  According to Groovy's language rules, the reserved <<<delegate>>> variable is only accessible from within the closure. To access the current thread from elsewhere (such as from a subroutine you define), use <<<vm.currentThread>>>.
+
+* Deeper Stack Frame
+  
+  To access deeper stack frames, use <<<frame(N)>>> where N=0,1,2 and so on. <<<frame(0)>>> is the top of the stack frame, and <<<frame(1)>>> is the next one. In the following example, the script will print <<<args[0]>>> of the <<<main>>> method that's calling <<<foo>>>.
+
+------------
+// test program
+class Main {
+  public static void main(String[] args) {
+    foo();
+  }
+  public static void foo() {}
+}
+
+// YouDebug script
+vm.methodEntryBreakpoint("Main","foo") {
+  println frame(1).args[0];
+}
+------------
+
+* Classes Without Debug Informatoin
+
+  Some classes (most notably classes in <<<rt.jar>>>) are compiled without local variable debug information. If you are using JavaSE 6, you can still access method parameters by their positions, like this:
+
+------------
+vm.methodEntryBreakpoint("Main","main") {
+  // print the first argument to the main method
+  // the explicit use of 'delegate.' is necessary, or else it becomes just a bare literal.
+  println delegate."#0";
+}
+------------
+
+* Dump Stack Frames
+
+  For your convenience, you can dump the stack frames of a thread by calling <<<dumpThread>>>.
+
+------------
+vm.breakpoint("Main",5) {
+  dumpThread(); // short for 'delegate.dumpThread()', which is the same as 'vm.currentThread.dumpThread()'
+}
+------------
+
+* Accessing Other Threads
+
+  To access other threads in the system, use <<<vm.threads>>>. The following example dumps all the threads the JVM:
+
+------------
+for (t in vm.threads)
+  t.dumpThread();
+
+vm.threads*.dumpThread()   // or more concisely in the Groovy way
+------------
+

@@ -29,7 +29,6 @@ import java.lang.management.ManagementFactory
 import com.sun.management.HotSpotDiagnosticMXBean
 import com.sun.jdi.request.EventRequest
 import java.util.logging.Level
-import com.sun.jdi.ObjectReference
 
 /**
  * Debugger view of a Virtual machine. 
@@ -176,7 +175,7 @@ public class VM implements Closeable {
         for (Location loc : type.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
             HANDLER[bp] = { BreakpointEvent e ->
-                c.setDelegate(new BreakpointDelegate(e));
+                c.setDelegate(e.thread());
                 c.call();
             };
             bp.enable();
