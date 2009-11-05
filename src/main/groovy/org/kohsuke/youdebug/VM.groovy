@@ -29,6 +29,8 @@ import java.lang.management.ManagementFactory
 import com.sun.management.HotSpotDiagnosticMXBean
 import com.sun.jdi.request.EventRequest
 import java.util.logging.Level
+import com.sun.jdi.request.MethodEntryRequest
+import com.sun.jdi.event.MethodEntryEvent
 
 /**
  * Debugger view of a Virtual machine. 
@@ -229,6 +231,32 @@ public class VM implements Closeable {
     public ExceptionRequest exceptionBreakpoint(String exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
+
+    public MethodEntryRequest methodEntryBreakpoint(ReferenceType type, String methodName, Closure body) {
+        MethodEntryRequest q = createMethodEntryRequest(methodName,body);
+        q.addClassFilter(type);
+        q.enable();
+        return q;
+    }
+
+    public MethodEntryRequest methodEntryBreakpoint(String type, String methodName, Closure body) {
+        MethodEntryRequest q = createMethodEntryRequest(methodName,body);
+        q.addClassFilter(type);
+        q.enable();
+        return q;
+    }
+
+    private MethodEntryRequest createMethodEntryRequest(String methodName, Closure body) {
+        MethodEntryRequest q = req.createMethodEntryRequest()
+        HANDLER[q] = {MethodEntryEvent e ->
+            if (e.method().name() == methodName) {
+                body.setDelegate(e.thread());
+                body.call(e.method());
+            }
+        }
+        return q
+    }
+
 
     /**
      * Resolves a class by the name.

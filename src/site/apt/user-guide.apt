@@ -168,7 +168,7 @@ vm.methodEntryBreakpoint("Main","foo") {
 vm.methodEntryBreakpoint("Main","main") {
   // print the first argument to the main method
   // the explicit use of 'delegate.' is necessary, or else it becomes just a bare literal.
-  println delegate."#0";
+  println delegate."@0";
 }
 ------------
 
