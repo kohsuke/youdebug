@@ -1,0 +1,19 @@
+    ---------------
+    Gotchas
+    ---------------
+
+Class Loading
+
+  In a regular Java program, classes are loaded on-demand at the right momeny when you reference them, so you mostly don't care when a class is actually loaded into JVM. But this is not so when you reference classes in the target JVM by using <<<vm.ref>>>. For example, the following code would fail if the <<<java.lang.System>>> class is not yet loaded into the target JVM.
+  
+---------------
+vm.breakpoint("SomeClass",152) {
+  vm._(System).out.println "Hello";
+}
+---------------
+
+  This problem is more common when you refer to classes that you define in your program. This behavior comes JDI, presumably to reduce the interference between the debugger and the debugee.
+  
+  To work around the problem, you can use <<<vm.loadClass>>>. This 
+  
+  
