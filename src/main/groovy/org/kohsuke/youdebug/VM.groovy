@@ -211,7 +211,7 @@ public class VM implements Closeable {
     }
 
     public ExceptionRequest exceptionBreakpoint(String className, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
-        def bpreqs = [];
+        List<ExceptionRequest> bpreqs = [];
         def r = forEachClass(className) { ReferenceType t ->
             bpreqs.add(exceptionBreakpoint(t,modifiers,c));
         }
