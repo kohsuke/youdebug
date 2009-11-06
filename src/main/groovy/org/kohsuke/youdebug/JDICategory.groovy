@@ -382,20 +382,27 @@ public class JDICategory {
         primitive2box(float.class,Float.class);
         primitive2box(double.class,Double.class);
 
-        JDICategory.class.methods.findAll { m -> m.name=="methodMissing" }.each { java.lang.reflect.Method m ->
-            Class target = m.parameterTypes[0];
-            target.metaClass."${m.name}" = {String name, Object args ->
-                return m.invoke(null, [delegate, name, args] as Object[]);
-            }
-        }
+        def methods = JDICategory.class.methods
+        methods.findAll { m -> m.name=="methodMissing" }.each { registerMethodMissing(it) }
+        methods.findAll { m -> m.name=="propertyMissing" }.each { registerPropertyMissing(it); }
+    }
 
-        JDICategory.class.methods.findAll { m -> m.name=="propertyMissing" }.each { java.lang.reflect.Method m ->
-            Class[] pt = m.parameterTypes
-            Closure c;
-            if (pt.length==2)   c = {name -> m.invoke(null,delegate,name);}
-            else                c = {name, value-> m.invoke(null,delegate,name,value); }
-
-            pt[0].metaClass."${m.name}" = c;
+    private static void registerMethodMissing(java.lang.reflect.Method m) {
+        Class target = m.parameterTypes[0];
+        target.metaClass."${m.name}" = {String name, Object args ->
+            return m.invoke(null, [delegate, name, args] as Object[]);
         }
+    }
+
+    /**
+     * Groovy doesn't create a new variable for each loop, so to fix 'm' we need to put this in a separate method
+     */
+    private static void registerPropertyMissing(java.lang.reflect.Method m) {
+        Class[] pt = m.parameterTypes
+        Closure c;
+        if (pt.length == 2)     c = {name -> m.invoke(null, delegate, name);}
+        else                    c = {name, value -> m.invoke(null, delegate, name, value); }
+
+        pt[0].metaClass."${m.name}" = c
     }
 }
