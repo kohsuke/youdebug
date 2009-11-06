@@ -7,6 +7,35 @@ vm.breakpoint("SubStringTest",8) {
 
     vm.exceptionBreakpoint(StringIndexOutOfBoundsException) { e ->
         e.dumpStackTrace();
+
+        // evaluate getMessage()
+        Assert.assertEquals("String index out of range: -1",e.getMessage());
+        // local hashCode vs remote hashCode
+        Assert.assertTrue(e.hashCode()!=e.'@hashCode'());
+
+        // reference to a static field
+        vm._(System).out.println("Hello from debugger");
+
+        // static method invocation
+        Assert.assertEquals(
+            System.getProperty("java.home"),
+            vm.ref("java.lang.System").getProperty("java.home"));
+
+        // new instance
+        def sw = vm.loadClass(StringWriter.class)."@new"();
+        def pw = vm.loadClass(PrintWriter.class)."@new"(sw);
+        e.printStackTrace(pw);
+        String dump = sw.toString();
+        System.out.println(dump);
+        Assert.assertTrue(dump.contains(StringIndexOutOfBoundsException.class.name))
+
+        // local variable access
+        dumpThread();
+        Assert.assertEquals(delegate."@0",5);
+        Assert.assertEquals(delegate."@1",4);
+
+        Assert.assertEquals(frame(1)."@0",5);
+
         hit++;
     }
 }

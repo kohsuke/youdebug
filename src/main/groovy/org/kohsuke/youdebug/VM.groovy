@@ -343,6 +343,7 @@ public class VM implements Closeable {
         } catch (IllegalArgumentException e) {
             // force load
             def cl = currentThread.frame(0).location().declaringType().classLoader();
+            if (cl==null)   cl=ref(ClassLoader).getSystemClassLoader();
             def clazz = cl.loadClass(c, true)
             clazz.getMethods(); // force preparation
             return clazz.reflectedType();
