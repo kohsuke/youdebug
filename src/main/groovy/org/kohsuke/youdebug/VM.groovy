@@ -63,6 +63,10 @@ public class VM implements Closeable {
         return threads;
     }
 
+    public VirtualMachine getVirtualMachine() {
+        return vm;
+    }
+
     /**
      * Returns the thread that raised the current event.
      * For example, if the caller is a closure for a break point, this method
