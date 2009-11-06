@@ -92,21 +92,18 @@ public class JDICategory {
      * Instance field retrieval.
      */
     public static Object propertyMissing(ObjectReference ref, String name) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
-        return lvalue(ref, name).getUnwrapped();
+        Variable v = getVariable(ref,name);
+        if (v==null)    throw new MissingPropertyException("No such property '"+name+"' on "+ref.referenceType().name());
+        return v.getUnwrapped();
     }
 
     /**
      * Instance field assignment.
      */
     public static void propertyMissing(ObjectReference ref, String name, Object value) throws InvocationException, InvalidTypeException, ClassNotLoadedException, IncompatibleThreadStateException {
-        lvalue(ref, name).set(value);
-    }
-
-    private static Variable lvalue(ObjectReference ref, String name) {
-        name = unescape(name);
-        Field f = ref.referenceType().fieldByName(name);
-        if (f==null)        throw new MissingPropertyException("No such property '"+name+"' on "+ref.referenceType().name());
-        return Variable.fromField(ref,f);
+        Variable v = getVariable(ref,name);
+        if (v==null)    throw new MissingPropertyException("No such property '"+name+"' on "+ref.referenceType().name());
+        v.set(value);
     }
 
     /**
@@ -201,14 +198,18 @@ public class JDICategory {
      * Read variables visible from the stack frame
      */
     public static Object propertyMissing(StackFrame frame, String name) {
-        return getVariable(frame,name).getUnwrapped();
+        Variable v = getVariable(frame, name)
+        if (v==null)        throw new MissingPropertyException(name,StackFrame.class);
+        return v.getUnwrapped();
     }
 
     /**
      * Set variables visible from the stack trace
      */
     public static void propertyMissing(StackFrame frame, String name, Object value) {
-        getVariable(frame,name).set(value);
+        Variable v = getVariable(frame, name)
+        if (v==null)        throw new MissingPropertyException(name,StackFrame.class);
+        v.set(value);
     }
 
     /**
@@ -252,6 +253,24 @@ public class JDICategory {
 
         return null;
     }
+
+    /**
+     * Obtains the field visible from the object.
+     *
+     * Additionally, if the reference is a thread, then expose variables visible at its top stack frame.
+     */
+    private static Variable getVariable(ObjectReference ref, String name) {
+        Variable v = null;
+        if (ref instanceof ThreadReference)
+            v = getVariable(((ThreadReference) ref).frame(0),name);
+        if (v == null) {
+            name = unescape(name);
+            Field f = ref.referenceType().fieldByName(name);
+            if (f!=null)    v=Variable.fromField(ref,f);
+        }
+        return v
+    }
+
 
     /**
      * Static method invocation from {@link ClassType}.
@@ -348,20 +367,6 @@ public class JDICategory {
         }
     }
 
-    /**
-     * Read variables visible from the top stack frame of this thread
-     */
-    public static Object propertyMissing(ThreadReference t, String name) {
-        return propertyMissing(t.frame(0),name);
-    }
-
-    /**
-     * Set variables visible from the top stack frame of this thread
-     */
-    public static void propertyMissing(ThreadReference t, String name, Object value) {
-        propertyMissing(t.frame(0),name,value);
-    }
-
     private static final Logger LOGGER = Logger.getLogger(JDICategory.class.getName());
 
     /**
@@ -382,6 +387,8 @@ public class JDICategory {
         primitive2box(float.class,Float.class);
         primitive2box(double.class,Double.class);
 
+        // caution: because of http://jira.codehaus.org/browse/GROOVY-3871,
+        // we shouldn't define these handlers for two interfaces that are inheritance-related.
         def methods = JDICategory.class.methods
         methods.findAll { m -> m.name=="methodMissing" }.each { registerMethodMissing(it) }
         methods.findAll { m -> m.name=="propertyMissing" }.each { registerPropertyMissing(it); }
