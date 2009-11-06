@@ -383,7 +383,34 @@ public class VM implements Closeable {
         return this;
     }
 
-    public void execute(final InputStream script) throws InterruptedException {
+    public void execute(InputStream script) throws InterruptedException {
+        execute(new GroovyCodeSource(script,null,null));
+    }
+
+    public void execute(File script) throws InterruptedException {
+        execute(new GroovyCodeSource(script));
+    }
+
+    public void execute(URL script) throws InterruptedException {
+        execute(new GroovyCodeSource(script));
+    }
+
+    public void execute(GroovyCodeSource script) throws InterruptedException {
+        execute(script,Collections.emptyMap());
+    }
+
+
+
+    /**
+    * Executes the given YouDebug script.
+     *
+     * @param script
+     *      The script to execute.
+     * @param variables
+     *      Additional variables to be exposed to the script. This is useful for passing information
+     *      between the script and the calling program.
+     */
+    public void execute(GroovyCodeSource script, Map<String,?> variables) throws InterruptedException {
         // this makes JDWP retrieves a global 'versionInfo' from the target JVM. Do this while the JVM is suspended,
         // or else when we do this later, the VM runs a bit, and we can miss events
         vm.version();
@@ -395,6 +422,7 @@ public class VM implements Closeable {
 
             Binding binding = new Binding();
             binding.setVariable("vm",_this());
+            variables?.each { k,v -> binding.setVariable(k,v) }
 
             GroovyShell groovy = new GroovyShell(binding,cc);
 
