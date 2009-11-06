@@ -16,8 +16,9 @@
     </menu>
 
     <menu name="References">
-      <item name="JDI Enhancements" href="jdi+apidocs/index.html"/>
-      <item name="JDI" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi"/>
+      <item name="Javadoc" href="apidocs/index.html"/>
+      <item name="Groovy JDI" href="jdi+apidocs/index.html"/>
+      <item name="JDI API" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi"/>
     </menu>
 
     <menu ref="reports"/>
