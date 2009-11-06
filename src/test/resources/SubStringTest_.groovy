@@ -29,8 +29,10 @@ vm.breakpoint("SubStringTest",8) {
         System.out.println(dump);
         Assert.assertTrue(dump.contains(StringIndexOutOfBoundsException.class.name))
 
+        dumpThread();   // should dump the current thread
+        vm.threads*.dumpThread();   // all threads
+
         // local variable access
-        dumpThread();
         Assert.assertEquals(delegate."@0",5);
         Assert.assertEquals(delegate."@1",4);
 
