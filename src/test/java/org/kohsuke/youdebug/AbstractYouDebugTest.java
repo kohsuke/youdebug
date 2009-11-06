@@ -9,9 +9,11 @@ import java.util.Collections;
 import groovy.lang.GroovyCodeSource;
 
 /**
+ * Base class for unit tests.
+ * 
  * @author Kohsuke Kawaguchi
  */
-public class AbstractYouDebugTest extends TestCase {
+public abstract class AbstractYouDebugTest extends TestCase {
     protected void join(VM vm) throws InterruptedException {
         assertEquals(0,vm.getVirtualMachine().process().waitFor());
     }
