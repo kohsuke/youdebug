@@ -38,7 +38,11 @@ public class JDICategory {
      * Deletes this event request.
      */
     public static void delete(EventRequest req) {
-        req.virtualMachine().eventRequestManager().deleteEventRequest(req);
+        if (req==null)      return;
+        if (req instanceof SyntheticEventRequest)
+            ((SyntheticEventRequest)req).delete();
+        else
+            req.virtualMachine().eventRequestManager().deleteEventRequest(req);
     }
 
     /**

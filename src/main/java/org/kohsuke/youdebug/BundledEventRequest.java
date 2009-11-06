@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @author Kohsuke Kawaguchi
  */
-public class BundledEventRequest<E extends EventRequest> implements EventRequest {
+public class BundledEventRequest<E extends EventRequest> implements SyntheticEventRequest {
 
     protected final List<E> requests;
 
@@ -63,5 +63,10 @@ public class BundledEventRequest<E extends EventRequest> implements EventRequest
 
     protected E one() {
         return requests.get(0);
+    }
+
+    public void delete() {
+        for (E request : requests)
+            JDICategory.delete(request);
     }
 }

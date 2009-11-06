@@ -31,4 +31,10 @@ class BundledEventRequestWithClassPrepare<E extends EventRequest> extends Bundle
     /*package*/ void add(E e) {
         requests.add(e);
     }
+
+    @Override
+    public void delete() {
+        super.delete();
+        JDICategory.delete(req);
+    }
 }
