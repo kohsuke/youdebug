@@ -5,6 +5,10 @@
   <artifactId>youdebug</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>YouDebug</name>
+  <description>
+    YouDebug is a non-interactive debugger scripted by Groovy to assist
+    remote troubleshooting and data collection to analyze failures.
+  </description>
 
   <build>
     <plugins>
