@@ -12,7 +12,7 @@
     <menu name="YouDebug">
       <item name="Introduction" href="index.html"/>
       <item name="User Guide" href="user-guide.html"/>
-      <item name="Download" href="download.html"/>
+      <item name="Download" href="http://maven.dyndns.org/2/org/kohsuke/youdebug/"/>
     </menu>
 
     <menu name="References">
