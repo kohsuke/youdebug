@@ -550,7 +550,7 @@ public class VM implements Closeable {
      * The method blocks until the debug connection is closed.
      */
     public void execute(GroovyCodeSource script) throws InterruptedException {
-        execute(script,Collections.<String,Object>emptyMap());
+        execute(script,Collections.emptyMap());
     }
 
 
