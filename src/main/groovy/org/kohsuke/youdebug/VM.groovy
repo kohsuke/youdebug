@@ -63,6 +63,12 @@ public class VM implements Closeable {
         return threads;
     }
 
+    /**
+     * Access to the underlying JDI {@link VirtualMachine} object.
+     * Use this method when you want to go down to JDI.
+     *
+     * @return never null.
+     */
     public VirtualMachine getVirtualMachine() {
         return vm;
     }
@@ -139,6 +145,19 @@ public class VM implements Closeable {
         }
     }
 
+    /**
+     * Sets a break point to be fired when a class of the specified name is loaded into the JVM.
+     *
+     * <p>
+     * The closure will get the {@link ReferenceType} object as a parameter, which represents
+     * a newly loaded class.
+     *
+     * <pre>
+     * classPrepare("org.acme.FooBar") { t ->
+     *   ...
+     * }
+     * </pre>
+     */
     public ClassPrepareRequest classPrepare(String name, final Closure c) {
         ClassPrepareRequest r = req.createClassPrepareRequest();
         r.addClassFilter(name);
@@ -150,6 +169,10 @@ public class VM implements Closeable {
         return r;
     }
 
+    /**
+     * Same as {@link #classPrepare(String, Closure)} except you specify the class by using
+     * a reference to the class in this JVM.
+     */
     public ClassPrepareRequest classPrepare(Class clazz, final Closure c) {
         return classPrepare(clazz.getName(),c);
     }
@@ -174,10 +197,18 @@ public class VM implements Closeable {
         return new BundledBreakpointRequest(r,bpreqs);
     }
 
+    /**
+     * Same as {@link #breakpoint(String, int, Closure)} except you specify the class by using
+     * a reference to the class in this JVM.
+     */
     public BundledBreakpointRequest breakpoint(Class className, int line, final Closure c) throws AbsentInformationException {
         return breakpoint(className.name,line,c);
     }
 
+    /**
+     * Same as {@link #breakpoint(String, int, Closure)} except you specify the class by using
+     * a remote reference {@link ReferenceType}.
+     */
     public BundledBreakpointRequest breakpoint(ReferenceType type, int line, final Closure c) throws AbsentInformationException {
         List<BreakpointRequest> bps = [];
         for (Location loc : type.locationsOfLine(line)) {
@@ -193,17 +224,12 @@ public class VM implements Closeable {
     }
 
     /**
-     * Sets a break point that hits upon an exception.
-     *
-     * <pre>
-     * exceptionBreakpoint(className) { e ->
-     *    // e references the exception that is thrown
-     * }
-     * </pre>
+     * Same as {@link #exceptionBreakpoint(String, Collection<org.kohsuke.youdebug.ExceptionBreakpointModifier>, Closure)}
+     * except you specify the exception type by a remote reference of the type.
      */
     public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
         // default to all situations, since "none" isn't useful
-        if (modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
+        if (modifiers==null || modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
         registerHandler(q) { ExceptionEvent e ->
@@ -214,6 +240,19 @@ public class VM implements Closeable {
         return q;
     }
 
+    /**
+     * Sets a break point that hits upon an exception.
+     *
+     * <pre>
+     * exceptionBreakpoint(className) { e ->
+     *    // e references the exception that is thrown
+     * }
+     * </pre>
+     *
+     * @param modifiers
+     *      Optionally specify the kind of exceptions (caught or uncaught) that you want to catch.
+     *      If this is null or empty, both kinds of exceptions are caught.
+     */
     public ExceptionRequest exceptionBreakpoint(String className, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
         List<ExceptionRequest> bpreqs = [];
         def r = forEachClass(className) { ReferenceType t ->
@@ -222,18 +261,31 @@ public class VM implements Closeable {
         return new BundledExceptionRequest(r,bpreqs);
     }
 
+    /**
+     * Same as {@link #exceptionBreakpoint(String, Collection<org.kohsuke.youdebug.ExceptionBreakpointModifier>, Closure)}
+     * except you specify the exception type by a local class of the same name.
+     */
     public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
         return exceptionBreakpoint(exceptionClass.name,modifiers,c);
     }
 
+    /**
+     * Short for {@code exceptionBreakpoint(exceptionClass,null,c)}, to get notified for both kinds of exceptions.
+     */
     public ExceptionRequest exceptionBreakpoint(Class exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
 
+    /**
+     * Short for {@code exceptionBreakpoint(exceptionClass,null,c)}, to get notified for both kinds of exceptions.
+     */
     public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
 
+    /**
+     * Short for {@code exceptionBreakpoint(exceptionClass,null,c)}, to get notified for both kinds of exceptions.
+     */
     public ExceptionRequest exceptionBreakpoint(String exceptionClass, Closure c) {
         return exceptionBreakpoint(exceptionClass,EnumSet.allOf(ExceptionBreakpointModifier.class),c);
     }
