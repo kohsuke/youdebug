@@ -163,12 +163,13 @@ public class VM implements Closeable {
      * }
      * </pre>
      */
-    public ClassPrepareRequest classPrepare(String name, final Closure c) {
+    public ClassPrepareRequest classPrepare(String name, final Closure body) {
         ClassPrepareRequest r = req.createClassPrepareRequest();
         r.addClassFilter(name);
         registerHandler(r) { ClassPrepareEvent event ->
-            c.setDelegate(event.thread());
-            c.call(event.referenceType());
+            body.delegate = event.thread();
+            body.resolveStrategy = Closure.DELEGATE_FIRST;
+            body.call(event.referenceType());
         };
         r.enable();
         return r;
@@ -214,14 +215,11 @@ public class VM implements Closeable {
      * Same as {@link #breakpoint(String, int, Closure)} except you specify the class by using
      * a remote reference {@link ReferenceType}.
      */
-    public BundledBreakpointRequest breakpoint(ReferenceType type, int line, final Closure c) throws AbsentInformationException {
+    public BundledBreakpointRequest breakpoint(ReferenceType type, int line, final Closure body) throws AbsentInformationException {
         List<BreakpointRequest> bps = [];
         for (Location loc : type.locationsOfLine(line)) {
             BreakpointRequest bp = req.createBreakpointRequest(loc);
-            registerHandler(bp) { BreakpointEvent e ->
-                c.setDelegate(e.thread());
-                c.call();
-            };
+            registerNoArgHandler(bp,body);
             bp.enable();
             bps.add(bp);
         }
@@ -232,15 +230,12 @@ public class VM implements Closeable {
      * Same as {@link #exceptionBreakpoint(String, Collection<org.kohsuke.youdebug.ExceptionBreakpointModifier>, Closure)}
      * except you specify the exception type by a remote reference of the type.
      */
-    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure c) {
+    public ExceptionRequest exceptionBreakpoint(ReferenceType exceptionClass, Collection<ExceptionBreakpointModifier> modifiers, Closure body) {
         // default to all situations, since "none" isn't useful
         if (modifiers==null || modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
-        registerHandler(q) { ExceptionEvent e ->
-            c.setDelegate(e.thread());
-            c.call(e.exception());
-        };
+        registerNoArgHandler(q,body);
         q.enable();
         return q;
     }
@@ -313,7 +308,8 @@ public class VM implements Closeable {
         MethodEntryRequest q = req.createMethodEntryRequest()
         registerHandler(q) { MethodEntryEvent e ->
             if (e.method().name() == methodName) {
-                body.setDelegate(e.thread());
+                body.delegate = e.thread();
+                body.resolveStrategy = Closure.DELEGATE_FIRST
                 body.call();
             }
         }
@@ -338,7 +334,8 @@ public class VM implements Closeable {
         MethodExitRequest q = req.createMethodExitRequest()
         registerHandler(q) { MethodExitEvent e ->
             if (e.method().name() == methodName) {
-                body.setDelegate(e.thread());
+                body.delegate = e.thread();
+                body.resolveStrategy = Closure.DELEGATE_FIRST
                 body.call(e.returnValue());
             }
         }
@@ -350,10 +347,7 @@ public class VM implements Closeable {
      */
     public AccessWatchpointRequest accessWatchpoint(Field f, Closure body) {
         def awp = req.createAccessWatchpointRequest(f)
-        registerHandler(awp) { AccessWatchpointEvent e ->
-            body.setDelegate(e.thread());
-            body.call();
-        };
+        registerNoArgHandler(awp,body);
         awp.enable();
         return awp;
     }
@@ -383,10 +377,7 @@ public class VM implements Closeable {
      */
     public ModificationWatchpointRequest modificationWatchpoint(Field f, Closure body) {
         def awp = req.createModificationWatchpointRequest(f)
-        registerHandler(awp) { ModificationWatchpointEvent e ->
-            body.setDelegate(e.thread());
-            body.call();
-        };
+        registerNoArgHandler(awp,body);
         awp.enable();
         return awp;
     }
@@ -413,6 +404,14 @@ public class VM implements Closeable {
 
     private void registerHandler(EventRequest q, Closure body) {
         HANDLER[q] = body;
+    }
+
+    private void registerNoArgHandler(EventRequest q, Closure body) {
+        registerHandler(q) { LocatableEvent e ->
+            body.delegate = e.thread();
+            body.resolveStrategy = Closure.DELEGATE_FIRST
+            body.call();
+        };
     }
 
     /**
