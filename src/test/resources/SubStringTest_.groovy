@@ -3,7 +3,7 @@ import junit.framework.Assert
 vm.breakpoint("SubStringTest",8) {
     println "s="+s;
     Assert.assertEquals(s,"test")
-    Assert.assertEquals(frame(0).s,"test")
+    Assert.assertEquals(thread.frame(0).s,"test")
     hit++;
 
     vm.exceptionBreakpoint(StringIndexOutOfBoundsException) { e ->
@@ -30,14 +30,14 @@ vm.breakpoint("SubStringTest",8) {
         System.out.println(dump);
         Assert.assertTrue(dump.contains(StringIndexOutOfBoundsException.class.name))
 
-        dumpThread();   // should dump the current thread
+        thread.dumpThread();   // should dump the current thread
         vm.threads*.dumpThread();   // all threads
 
         // local variable access
         Assert.assertEquals(delegate."@0",5);
         Assert.assertEquals(delegate."@1",4);
 
-        Assert.assertEquals(frame(1)."@0",5);
+        Assert.assertEquals(thread.frame(1)."@0",5);
 
         hit++;
     }

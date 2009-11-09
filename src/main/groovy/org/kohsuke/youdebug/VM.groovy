@@ -19,7 +19,6 @@ import com.sun.jdi.event.ClassPrepareEvent
 import com.sun.jdi.event.EventSet
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.request.BreakpointRequest
-import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.request.ExceptionRequest
 import com.sun.jdi.event.ExceptionEvent
 import com.sun.jdi.ReferenceType
@@ -35,9 +34,7 @@ import com.sun.jdi.request.MethodExitRequest
 import com.sun.jdi.event.MethodExitEvent
 import com.sun.jdi.request.AccessWatchpointRequest
 import com.sun.jdi.Field
-import com.sun.jdi.event.AccessWatchpointEvent
 import com.sun.jdi.request.ModificationWatchpointRequest
-import com.sun.jdi.event.ModificationWatchpointEvent
 
 /**
  * Debugger view of a Virtual machine. 
@@ -235,7 +232,11 @@ public class VM implements Closeable {
         if (modifiers==null || modifiers.isEmpty())    modifiers = EnumSet.allOf(ExceptionBreakpointModifier.class);
 
         ExceptionRequest q = req.createExceptionRequest(exceptionClass, modifiers.contains(CAUGHT), modifiers.contains(UNCAUGHT));
-        registerNoArgHandler(q,body);
+        registerHandler(q) { ExceptionEvent e ->
+            body.delegate = new EventDelegate(e.thread());
+            body.resolveStrategy = Closure.DELEGATE_FIRST
+            body.call(e.exception());
+        };
         q.enable();
         return q;
     }
@@ -308,7 +309,7 @@ public class VM implements Closeable {
         MethodEntryRequest q = req.createMethodEntryRequest()
         registerHandler(q) { MethodEntryEvent e ->
             if (e.method().name() == methodName) {
-                body.delegate = e.thread();
+                body.delegate = new EventDelegate(e.thread());
                 body.resolveStrategy = Closure.DELEGATE_FIRST
                 body.call();
             }
@@ -334,7 +335,7 @@ public class VM implements Closeable {
         MethodExitRequest q = req.createMethodExitRequest()
         registerHandler(q) { MethodExitEvent e ->
             if (e.method().name() == methodName) {
-                body.delegate = e.thread();
+                body.delegate = new EventDelegate(e.thread());
                 body.resolveStrategy = Closure.DELEGATE_FIRST
                 body.call(e.returnValue());
             }
@@ -408,7 +409,7 @@ public class VM implements Closeable {
 
     private void registerNoArgHandler(EventRequest q, Closure body) {
         registerHandler(q) { LocatableEvent e ->
-            body.delegate = e.thread();
+            body.delegate = new EventDelegate(e.thread());
             body.resolveStrategy = Closure.DELEGATE_FIRST
             body.call();
         };

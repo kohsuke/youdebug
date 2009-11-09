@@ -1,7 +1,7 @@
 package org.kohsuke.youdebug;
 
 public class AppTest extends AbstractYouDebugTest {
-    public void testApp() throws Exception {
+    public void testSubString() throws Exception {
         VM vm = fork("SubStringTest");
         assertEquals(2,exec(vm, "SubStringTest_.groovy"));
         join(vm);

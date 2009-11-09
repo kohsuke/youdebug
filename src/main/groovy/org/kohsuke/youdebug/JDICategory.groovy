@@ -27,6 +27,7 @@ import org.kohsuke.youdebug.Variable
 import static com.sun.jdi.ThreadReference.*
 import static java.util.logging.Level.FINE
 import com.sun.jdi.LocalVariable
+import java.lang.reflect.InvocationTargetException
 
 /**
  * Method augmentation on top of JDI for Groovy
@@ -407,8 +408,23 @@ public class JDICategory {
     private static void registerPropertyMissing(java.lang.reflect.Method m) {
         Class[] pt = m.parameterTypes
         Closure c;
-        if (pt.length == 2)     c = {name -> m.invoke(null, delegate, name);}
-        else                    c = {name, value -> m.invoke(null, delegate, name, value); }
+        if (pt.length == 2) {
+            c = { String name ->
+                try {
+                    return m.invoke(null, delegate, name)
+                } catch (InvocationTargetException e) {
+                    throw e.targetException
+                };
+            }
+        } else {
+            c = { String name, Object value ->
+                try {
+                    m.invoke(null, delegate, name, value);
+                } catch (InvocationTargetException e) {
+                    throw e.targetException
+                };
+            }
+        }
 
         pt[0].metaClass."${m.name}" = c
     }

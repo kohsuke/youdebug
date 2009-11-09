@@ -137,13 +137,13 @@ vm.breakpoint("Main",5) {
 }
 ------------
 
-  This is actually just a short-hand for <<<delegate.i>>> (where <<<delegate>>> is a reserved variable in Groovy to point to the closure delegate.) <<<delegate>>> points to the thread that hit the breakpoint. The short form is concise, but a verbose form can be useful for disambiguation.
+  This is actually just a short-hand for <<<delegate.i>>> (where <<<delegate>>> is a reserved variable in Groovy to point to the closure delegate.) <<<delegate>>>. The short form is concise, but a verbose form can be useful for disambiguation, where the variable name hits other Groovy-reserved keywords, like 'owner', 'metaClass', and so on.
 
   According to Groovy's language rules, the reserved <<<delegate>>> variable is only accessible from within the closure. To access the current thread from elsewhere (such as from a subroutine you define), use <<<vm.currentThread>>>.
 
 * Deeper Stack Frame
   
-  To access deeper stack frames, use <<<frame(N)>>> where N=0,1,2 and so on. <<<frame(0)>>> is the top of the stack frame, and <<<frame(1)>>> is the next one. In the following example, the script will print <<<args[0]>>> of the <<<main>>> method that's calling <<<foo>>>.
+  In a breakpoint callback, <<<thread>>> refers to the JDI thread object that hit the breakpoint. This can be used to access deeper stack frames, by <<<thread.frame(N)>>> where N=0,1,2 and so on. <<<thread.frame(0)>>> is the top of the stack frame, and <<<thread.frame(1)>>> is the next one. In the following example, the script will print <<<args[0]>>> of the <<<main>>> method that's calling <<<foo>>>.
 
 ------------
 // test program
@@ -156,7 +156,7 @@ class Main {
 
 // YouDebug script
 vm.methodEntryBreakpoint("Main","foo") {
-  println frame(1).args[0];
+  println thread.frame(1).args[0];
 }
 ------------
 
@@ -174,11 +174,11 @@ vm.methodEntryBreakpoint("Main","main") {
 
 * Dump Stack Frames
 
-  For your convenience, you can dump the stack frames of a thread by calling <<<dumpThread>>>.
+  For your convenience, you can dump the stack frames of a thread by calling <<<thread.dumpThread>>>.
 
 ------------
 vm.breakpoint("Main",5) {
-  dumpThread(); // short for 'delegate.dumpThread()', which is the same as 'vm.currentThread.dumpThread()'
+  thread.dumpThread(); // short for 'delegate.dumpThread()', which is the same as 'vm.currentThread.dumpThread()'
 }
 ------------
 
