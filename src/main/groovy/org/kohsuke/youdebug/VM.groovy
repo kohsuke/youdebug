@@ -36,6 +36,8 @@ import com.sun.jdi.event.MethodExitEvent
 import com.sun.jdi.request.AccessWatchpointRequest
 import com.sun.jdi.Field
 import com.sun.jdi.event.AccessWatchpointEvent
+import com.sun.jdi.request.ModificationWatchpointRequest
+import com.sun.jdi.event.ModificationWatchpointEvent
 
 /**
  * Debugger view of a Virtual machine. 
@@ -376,6 +378,38 @@ public class VM implements Closeable {
         return accessWatchpoint(c.name,fieldName,body);
     }
 
+    /**
+     * Sets a breakpoint that fires when the specified field is updated.
+     */
+    public ModificationWatchpointRequest modificationWatchpoint(Field f, Closure body) {
+        def awp = req.createModificationWatchpointRequest(f)
+        registerHandler(awp) { ModificationWatchpointEvent e ->
+            body.setDelegate(e.thread());
+            body.call();
+        };
+        awp.enable();
+        return awp;
+    }
+
+    /**
+     * Sets a breakpoint that fires when the specified field of the specified class is updated.
+     */
+    public AccessWatchpointRequest modificationWatchpoint(String className, String fieldName, Closure body) {
+        List reqs = [];
+        def r = forEachClass(className) { ReferenceType t ->
+            def f = t.fieldByName(fieldName);
+            if (f!=null)
+                reqs.add(modificationWatchpoint(f,body));
+        }
+        return new BundledWatchpointRequest(r,reqs);
+    }
+
+    /**
+     * Same as {@code modificationWatchpoint(c.name,fieldName,body)}
+     */
+    public AccessWatchpointRequest modificationWatchpoint(Class c, String fieldName, Closure body) {
+        return modificationWatchpoint(c.name,fieldName,body);
+    }
 
     private void registerHandler(EventRequest q, Closure body) {
         HANDLER[q] = body;
