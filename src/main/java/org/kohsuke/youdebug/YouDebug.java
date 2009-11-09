@@ -110,7 +110,7 @@ public class YouDebug {
         if (vm==null)
             throw new CmdLineException("Neither -pid nor -socket option was specified");
 
-        vm.execute(script!=null ? new FileInputStream(script) : null);
+        vm.execute(script!=null ? script : null);
         return 0;
     }
 }

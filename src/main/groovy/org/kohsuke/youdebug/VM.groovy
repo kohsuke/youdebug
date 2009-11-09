@@ -523,7 +523,7 @@ public class VM implements Closeable {
      * The method blocks until the debug connection is closed.
      */
     public void execute(InputStream script) throws InterruptedException {
-        execute(new GroovyCodeSource(script,null,null));
+        execute(new GroovyCodeSource(script,"script.groovy","/groovy/shell")); // I don't really understand what the last parameter means
     }
 
     /**
@@ -550,7 +550,7 @@ public class VM implements Closeable {
      * The method blocks until the debug connection is closed.
      */
     public void execute(GroovyCodeSource script) throws InterruptedException {
-        execute(script,Collections.emptyMap());
+        execute(script,Collections.<String,Object>emptyMap());
     }
 
 
