@@ -377,12 +377,22 @@ public class VM implements Closeable {
         return ref(c);
     }
 
+    /**
+     * Creates a new instance of the given type in the remote JVM.
+     */
     public Object _new(Class c, Object... args) {
         return ref(c).methodMissing("new",args);
     }
 
+    /**
+     * Creates a new instance of the given type in the remote JVM.
+     */
     public Object _new(String c, Object... args) {
         return ref(c).methodMissing("new",args);
+    }
+
+    public Object _new(ReferenceType t, Object... args) {
+        return t.methodMissing("new",args);
     }
 
     /**
@@ -436,18 +446,38 @@ public class VM implements Closeable {
         return this;
     }
 
+    /**
+     * Executes the specified YouDebug script.
+     *
+     * The method blocks until the debug connection is closed.
+     */
     public void execute(InputStream script) throws InterruptedException {
         execute(new GroovyCodeSource(script,null,null));
     }
 
+    /**
+     * Executes the specified YouDebug script.
+     *
+     * The method blocks until the debug connection is closed.
+     */
     public void execute(File script) throws InterruptedException {
         execute(new GroovyCodeSource(script));
     }
 
+    /**
+     * Executes the specified YouDebug script.
+     *
+     * The method blocks until the debug connection is closed.
+     */
     public void execute(URL script) throws InterruptedException {
         execute(new GroovyCodeSource(script));
     }
 
+    /**
+     * Executes the specified YouDebug script.
+     *
+     * The method blocks until the debug connection is closed.
+     */
     public void execute(GroovyCodeSource script) throws InterruptedException {
         execute(script,Collections.emptyMap());
     }
@@ -484,14 +514,23 @@ public class VM implements Closeable {
         }
     }
 
+    /**
+     * Short for {@code dumpAllThreads(System.out)}
+     */
     public void dumpAllThreads() throws IncompatibleThreadStateException {
         dumpAllThreads(System.out);
     }
 
+    /**
+     * Dumps information about all the threads in the target JVM to the specified object.
+     */
     public void dumpAllThreads(PrintStream out) throws IncompatibleThreadStateException {
         dumpAllThreads(new PrintWriter(out,true));
     }
 
+    /**
+     * Dumps information about all the threads in the target JVM to the specified object.
+     */
     public void dumpAllThreads(PrintWriter out) throws IncompatibleThreadStateException {
         for (ThreadReference r : vm.allThreads()) {
             JDICategory.dumpThread(r,out);
@@ -519,12 +558,16 @@ public class VM implements Closeable {
         }
     }
 
-    public void dumpHeap() {
+    /**
+     * Instructs the target JVM to create a heap dump. The dump will be created on the file system
+     * of the target JVM.
+     *
+     */
+    public void dumpHeap(String path) {
         def mf = loadClass(ManagementFactory.class)
         def server = mf.getPlatformMBeanServer();
         def bean = mf.newPlatformMXBeanProxy(server,"com.sun.management:type=HotSpotDiagnostic", loadClass(HotSpotDiagnosticMXBean.class));
-        new File("/tmp/heapdump").delete();
-        bean.dumpHeap("/tmp/heapdump",true);
+        bean.dumpHeap(path,true);
     }
 
     /**
