@@ -12,4 +12,10 @@ public class AppTest extends AbstractYouDebugTest {
         assertEquals(3,exec(vm, "DynamicUpdate_.groovy"));
         join(vm);
     }
+
+    public void testScopedAccess() throws Exception {
+        VM vm = fork("ScopedAccess");
+        exec(vm, "ScopedAccess_.groovy");
+        join(vm);
+    }
 }
