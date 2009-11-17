@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <project name="YouDebug">
-  <!--<bannerLeft>-->
-    <!--<name>Maven</name>-->
-    <!--<src>http://maven.apache.org/images/apache-maven-project.png</src>-->
-    <!--<href>http://maven.apache.org/</href>-->
-  <!--</bannerLeft>-->
+  <bannerLeft>
+    <name>YouDebug</name>
+    <href>http://youdebug.kenai.com/</href>
+  </bannerLeft>
+  <skin>
+    <groupId>org.kohsuke</groupId>
+    <artifactId>maven-skin</artifactId>
+    <version>1.0</version>
+  </skin>
   <!--<bannerRight>-->
     <!--<src>http://maven.apache.org/images/maven-small.gif</src>-->
   <!--</bannerRight>-->
