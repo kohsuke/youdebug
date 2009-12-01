@@ -10,11 +10,14 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.*;
+import java.lang.NoSuchMethodException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.MalformedURLException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +31,9 @@ public class YouDebug {
 
     @Option(name="-socket",usage="Attaches to the target process by a socket",metaVar="[HOST:]PORT")
     public String remote = null;
+
+    @Option(name="-toolsJar",usage="Specify the location of the tools.jar, if it's in a non-standard location",metaVar="JAR")
+    public File toolsJar = null;
 
 //    @Option(name="-force")
 //    public boolean force = false;
@@ -43,24 +49,6 @@ public class YouDebug {
     }
 
     public static void main(String[] args) throws Exception {
-        // locate tools.jar first
-        String home = System.getProperty("java.home");
-        File toolsJar = new File(new File(home), "../lib/tools.jar");
-        if (!toolsJar.exists()) {
-            toolsJar = new File(new File(home), "../Classes/classes.jar");
-            if (!toolsJar.exists()) {
-                System.err.println("This tool requires a JDK, but you are running Java from "+home);
-                System.exit(1);
-            }
-        }
-
-        // shove tools.jar into the classpath
-        ClassLoader cl = ClassLoader.getSystemClassLoader();
-        Method m = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
-        m.setAccessible(true);
-        m.invoke(cl,toolsJar.toURL());
-
-
         YouDebug main = new YouDebug();
         CmdLineParser p = new CmdLineParser(main);
         try {
@@ -75,6 +63,8 @@ public class YouDebug {
     }
 
     public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException, AgentInitializationException, AgentLoadException, AttachNotSupportedException {
+        ensureJDILoaded();
+
         if (debugLevel>0) {
             ConsoleHandler h = new ConsoleHandler();
             h.setLevel(Level.ALL);
@@ -115,5 +105,43 @@ public class YouDebug {
 
         vm.execute(script!=null ? script : null);
         return 0;
+    }
+
+    /**
+     * If JDI is not already loadable, make sure it's loadable by adding <tt>tools.jar</tt> to the classpath.
+     */
+    private void ensureJDILoaded() throws CmdLineException, MalformedURLException {
+        try {
+            getClass().getClassLoader().loadClass("com.sun.jdi.ThreadReference");
+            // if JDK is already loaded, we don't need to resolve tools.jar.
+        } catch (ClassNotFoundException _) {
+            // resolve tools.jar
+            if (toolsJar==null) {
+                // locate tools.jar via java.home if not specified
+                String home = System.getProperty("java.home");
+                toolsJar = new File(new File(home), "../lib/tools.jar");
+                if (!toolsJar.exists()) {
+                    toolsJar = new File(new File(home), "../Classes/classes.jar");
+                    if (!toolsJar.exists())
+                        throw new CmdLineException("This tool requires a JDK, but you are running Java from "+home);
+                }
+            }
+            if (!toolsJar.exists())
+                throw new CmdLineException("No such file: "+toolsJar);
+
+            // shove tools.jar into the classpath
+            try {
+                ClassLoader cl = ClassLoader.getSystemClassLoader();
+                Method m = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+                m.setAccessible(true);
+                m.invoke(cl,toolsJar.toURL());
+            } catch (NoSuchMethodException e) {
+                throw new AssertionError(e);
+            } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
+            } catch (InvocationTargetException e) {
+                throw new AssertionError(e);
+            }
+        }
     }
 }
