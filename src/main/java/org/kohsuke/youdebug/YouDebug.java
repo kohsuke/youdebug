@@ -62,7 +62,7 @@ public class YouDebug {
         }
     }
 
-    public int run() throws CmdLineException, IOException, IllegalConnectorArgumentsException, InterruptedException, AgentInitializationException, AgentLoadException, AttachNotSupportedException {
+    public int run() throws Exception {
         ensureJDILoaded();
 
         if (debugLevel>0) {
@@ -123,7 +123,7 @@ public class YouDebug {
                 if (!toolsJar.exists()) {
                     toolsJar = new File(new File(home), "../Classes/classes.jar");
                     if (!toolsJar.exists())
-                        throw new CmdLineException("This tool requires a JDK, but you are running Java from "+home);
+                        throw new CmdLineException("Specify the location of tools.jar via -toolsJar, or run this tool with JDK (your java home is at "+home+')');
                 }
             }
             if (!toolsJar.exists())
