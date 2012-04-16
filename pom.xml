@@ -9,6 +9,13 @@
     remote troubleshooting and data collection to analyze failures.
   </description>
 
+  <licenses>
+    <license>
+      <name>The MIT license</name>
+      <url>LICENSE.txt</url>
+    </license>
+  </licenses>
+
   <build>
     <plugins>
       <plugin>
