@@ -4,7 +4,7 @@ For more information, see http://andreasviklund.com/templates/1024px/
 */
 
 /* General tags */
-body {background:#fff; color:#404040; font:76% Verdana,Tahoma,Arial,sans-serif; line-height:1.3em; margin:0 auto; padding:0;}
+body {background:#fff; color:#404040; font-family:Verdana,Tahoma,Arial,sans-serif; line-height:1.3em; margin:0 auto; padding:0;}
 a {color:#4088b8; font-weight:700; text-decoration:none;}
 a:hover {text-decoration:underline;}
 a img {border:0;}
@@ -15,16 +15,19 @@ blockquote {border:1px solid #dadada; font-size:0.9em; margin:20px 10px; padding
 blockquote p {margin:0;}
 
 /* Headers */
-h1 {color:#4088b8; font-size:3.6em; letter-spacing:-3px; margin:0 0 20px 25px;}
+h1 {color:#4088b8; font-size:2.5em; letter-spacing:-3px; margin:0 0 20px 25px; padding-top:0.5em;}
 h1 a {color:#4088b8; text-transform:none;}
-h2 {border-bottom:4px solid #dadada; color:#4088b8; font-size:1.4em; letter-spacing:-1px; margin:0 0 10px; padding:0 2px 2px 5px;}
-h3 {border-bottom:1px solid #dadada; color:#4088b8; font-size:1.2em; font-weight:700; margin:10px 0 8px; padding:1px 2px 2px 3px;}
+h2 {border-bottom:4px solid #dadada; color:#4088b8; font-size:1.2em; letter-spacing:-1px; margin:0 0 10px; padding:0 2px 2px 5px;}
+h3 {border-bottom:1px solid #dadada; color:#4088b8; font-size:1.1em; font-weight:700; margin:10px 0 8px; padding:1px 2px 2px 3px;}
 
 /* Main wrap */
 #wrap {color:#404040; padding: 0 150px; background:url(../images/background.r.gif) repeat-y top right; }
 #wrap2 { background:url(../images/background.l.gif) repeat-y top left; }
 #header {margin:0;}
-#toplinks {font-size:0.9em; padding:5px 2px 2px 3px; text-align:right;}
+#toplinks {
+    font-size:0.9em; padding:5px 2px 2px 3px; text-align:right;
+    position:absolute; left:0px; top:-500px;
+}
 #toplinks a {color:gray;}
 #slogan {color:gray; font-size:1.5em; font-weight:700; letter-spacing:-1px; line-height:1.2em; margin:15px 0 20px 35px;}
 
@@ -32,7 +35,7 @@ h3 {border-bottom:1px solid #dadada; color:#4088b8; font-size:1.2em; font-weight
 #sidebar {float:left; line-height:1.4em; margin:0 0 5px; padding:1px 0 0; width:16em;}
 #sidebar ul {font-size:0.9em; list-style:none; margin:0; padding:0 0 15px 10px;}
 #sidebar li {list-style:none; margin:0 0 4px; }
-#sidebar li a {font-size:1.2em; font-weight:700; padding:2px;}
+#sidebar li a {font-weight:700; padding:2px;}
 #sidebar ul ul {line-height:1.2em; margin:4px 0 3px 0px; padding:0;}
 #sidebar ul ul li a {font-weight:400;}
 #sidebar h2 {margin:3px 0 8px;}
