@@ -18,4 +18,10 @@ public class AppTest extends AbstractYouDebugTest {
         exec(vm, "ScopedAccess_.groovy");
         join(vm);
     }
+
+    public void testThisAccess() throws Exception {
+        VM vm = fork("ThisAccess");
+        exec(vm, "ThisAccess_.groovy");
+        join(vm);
+    }
 }

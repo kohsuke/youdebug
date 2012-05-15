@@ -229,6 +229,10 @@ public class JDICategory {
             // fall through
         }
 
+        // 'this'?
+        if (name.equals("this"))
+            return Variable.fromValue(frame.virtualMachine(),frame.thisObject());
+
         // local variable?
         try {
             LocalVariable v = frame.visibleVariableByName(name);

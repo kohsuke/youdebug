@@ -103,9 +103,13 @@ abstract class Variable {
     }
 
     static Variable fromMethodArgument(final StackFrame f, final int index) {
+        return fromValue(f.virtualMachine(), f.getArgumentValues().get(index));
+    }
+
+    static Variable fromValue(final VirtualMachine vm, final Value obj) {
         return new Variable() {
             protected VirtualMachine vm() {
-                return f.virtualMachine();
+                return vm;
             }
 
             public void set(Value o) {
@@ -113,7 +117,7 @@ abstract class Variable {
             }
 
             public Value get() {
-                return f.getArgumentValues().get(index);
+                return obj;
             }
         };
     }
