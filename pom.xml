@@ -104,6 +104,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/kohsuke/youdebug.git</connection>
+    <developerConnection>scm:git:git://github.com/kohsuke/youdebug.git</developerConnection>
   </scm>
 
   <dependencies>
