@@ -26,10 +26,18 @@ final class EventDelegate extends GroovyObjectSupport {
         return thread;
     }
 
+    /**
+     * Returns the 'this' object in the current stack frame of the target JVM.
+     */
+    public Object getSelf() {
+        return getProperty("this");
+    }
+
     public Object getProperty(String property) {
         try {
             if (property.equals("thread"))   return thread;
-            
+            if (property.equals("self"))     return getSelf();
+
             return JDICategory.propertyMissing(thread.frame(0),property);
         } catch (IncompatibleThreadStateException e) {
             throw new IllegalStateException(e);

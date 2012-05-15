@@ -127,7 +127,7 @@ vm._(File)."@new"("/tmp/hello");
 
 Inspecting/Manipulating Stack Frames
 
-  When a breakpoint is hit and the target JVM is suspended, you can walk the stack frames of threads and inspect variables. You do through {{{http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ThreadReference.html}ThreadReference}}.
+  When a breakpoint is hit and the target JVM is suspended, you can walk the stack frames of threads and inspect variables. You do this through {{{http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ThreadReference.html}ThreadReference}}.
   
   For example, in the following code, the debugger prints the visible variable 'i' from the current stack frame of the target JVM. A 'visible variable' includes local variables, instance fields, and then static fields in this order.
 
@@ -137,9 +137,19 @@ vm.breakpoint("Main",5) {
 }
 ------------
 
-  This is actually just a short-hand for <<<delegate.i>>> (where <<<delegate>>> is a reserved variable in Groovy to point to the closure delegate.) <<<delegate>>>. The short form is concise, but a verbose form can be useful for disambiguation, where the variable name hits other Groovy-reserved keywords, like 'owner', 'metaClass', and so on.
+  This is actually just a short-hand for <<<delegate.i>>> (where <<<delegate>>> is a reserved variable in Groovy to point to the closure delegate.) The short form is concise, but a verbose form can be useful for disambiguation, where the variable name hits other Groovy-reserved keywords, like 'owner', 'metaClass', and so on.
 
   According to Groovy's language rules, the reserved <<<delegate>>> variable is only accessible from within the closure. To access the current thread from elsewhere (such as from a subroutine you define), use <<<vm.currentThread>>>.
+
+* Accessing 'this' object
+
+  In a breakpoint callback, the <<<self>>> variable refers to the <<<this>>> object in the target VM.
+
+------------
+vm.breakpoint("Main",5) {
+  println self;
+}
+------------
 
 * Deeper Stack Frame
   
@@ -160,6 +170,8 @@ vm.methodEntryBreakpoint("Main","foo") {
 }
 ------------
 
+  The <<<frame>>> method returns {{{http://docs.oracle.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/StackFrame.html}StackFrame}} object.
+
 * Classes Without Debug Informatoin
 
   Some classes (most notably classes in <<<rt.jar>>>) are compiled without local variable debug information. If you are using JavaSE 6, you can still access method parameters by their positions, like this:
@@ -171,6 +183,13 @@ vm.methodEntryBreakpoint("Main","main") {
   println delegate."@0";
 }
 ------------
+
+* Avoiding Name Collisions
+
+  If your variable name collides with other names visible in your Groovy script, Java keywords, etc., you can escape them by prefixing '@'.
+  For example, if the target JVM has a variable named "for", you can reference it as <<<delegate."@for">>>. Explicit "delegate" prefix
+  is needed because otherwise this becomes a string literal.
+
 
 * Dump Stack Frames
 
