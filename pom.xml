@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>youdebug</artifactId>
-  <version>1.4</version>
+  <version>1.5-SNAPSHOT</version>
   <name>YouDebug</name>
   <description>
     YouDebug is a non-interactive debugger scripted by Groovy to assist
