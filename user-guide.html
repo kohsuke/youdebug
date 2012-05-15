@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+
+
+
+
+
+
+
+<html>
+  <head>
+    <title>YouDebug - User Guide</title>
+    <style type="text/css" media="all">
+      @import url("./css/maven-base.css");
+      @import url("./css/maven-theme.css");
+      @import url("./css/1024px.css");
+      @import url("./css/site.css");
+    </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      </head>
+  <body>
+    <div id="wrap2"><div id="wrap">
+    <div id="header">
+      <p id="toplinks">Skip to: <a href="#content">Content</a> | <a href="#sidebar">Navigation</a> | <a href="#footer">Footer</a></p>
+		
+            <h1 id="bannerLeft">
+          <a href="http://youdebug.kenai.com/">
+    
+            YouDebug
+    
+            </a>
+        </h1>
+                
+      <p id="slogan">YouDebug is a non-interactive debugger scripted by Groovy to assist
+    remote troubleshooting and data collection to analyze failures.</p>
+    </div>
+    <div id="breadcrumbs">
+      <div class="xright">  </div>
+      <div class="clear">
+        <hr/>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div id="navcolumn">
+              <h2>
+          YouDebug
+        </h2><ul>
+              
+    <li class="none">
+              <a href="index.html">Introduction</a>
+        </li>
+              
+    <li class="none">
+              <strong>User Guide</strong>
+        </li>
+              
+    <li class="none">
+              <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.kohsuke%22%20AND%20a%3A%22youdebug%22">Download</a>
+        </li>
+          </ul>
+      <h2>
+          References
+        </h2><ul>
+              
+    <li class="none">
+              <a href="apidocs/index.html">Javadoc</a>
+        </li>
+              
+    <li class="none">
+              <a href="jdi+apidocs/index.html">Groovy JDI</a>
+        </li>
+              
+    <li class="none">
+              <a href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi">JDI API</a>
+        </li>
+          </ul>
+      <h2>
+          Project Documentation
+        </h2><ul>
+              
+                
+              
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+              
+        <li class="collapsed">
+              <a href="project-info.html">Project Information</a>
+              </li>
+              
+                
+              
+      
+            
+      
+              
+        <li class="collapsed">
+              <a href="project-reports.html">Project Reports</a>
+              </li>
+          </ul>
+        </div>
+    </div>
+    <div id="content">
+      <div id="contentBox">
+        <p>YouDebug script is evaluated as a Groovy script, so you can do all the normal things <a class="externalLink" href="http://groovy.codehaus.org">Groovy</a> allows you to do, such as defining methods, calling other Java libraries, and so on. On top of that, YouDebug adds two major mechanisms:</p><div class="section"><h2>Defining Breakpoints<a name="Defining_Breakpoints"></a></h2><p>Breakpoints are event callback handlers that are invoked when a certain event occurs in the target JVM. You can create breakpoints by calling breakpoint mtehods on the 'vm' object. These methods takes a closure that gets invoked when the event occurs, and they often takes additional arguments to control the nature of the breakpoint.</p><p>The following code defines a breakpoint on line 7 of the <tt>org.acme.SubStringTest.java</tt> (or whichever source file this class is defined in:)</p><div><pre>vm.breakpoint(&quot;org.acme.SubStringTest&quot;,7) {
+  println &quot;I'm at SubStringTest.java line 7&quot;;
+}</pre></div><p>Some breakpoints have parameters for closures. For example, an exception breakpoint takes an object that represents the exception being thrown in the target JVM:</p><div><pre>vm.exceptionBreakpoint(&quot;java.lang.IllegalArgumentException&quot;) { e -&gt;
+  e.dumpStackTrace(System.out);
+}</pre></div><p>In YouDebug scripts, you often need to deal with classes in the target JVM. You can always use the string representation of the class name, but you can also use the <tt>java.lang.Class</tt> object in the YouDebug process, if it's available (that is, either those classes are the ones defined in JavaSE, or you've added your classes into the classpath of YouDebug invocation.) So the above code can be written a little more concisely as this:</p><div><pre>vm.exceptionBreakpoint(IllegalArgumentException.class) { e -&gt;
+  e.dumpStackTrace(System.out);
+}</pre></div><p>... or, by further using Groovy's shorthand for omitting the &quot;.class&quot; portion, you can do:</p><div><pre>vm.exceptionBreakpoint(IllegalArgumentException) { e -&gt;
+  e.dumpStackTrace(System.out);
+}</pre></div><div class="section"><h3>Dynamically Defining/Updating Breakpoints<a name="Dynamically_DefiningUpdating_Breakpoints"></a></h3><p>Breakpoint definitions are not limited to the top level. You can define new ones at any time, for example from another event handler. In the following example, an exception breakpoint is added once the execution hits <tt>SubStringTest</tt> line 7:</p><div><pre>vm.breakpoint(&quot;org.acme.SubStringTest&quot;,7) {
+  vm.exceptionBreakpoint(IllegalArgumentException) { e -&gt;
+    e.dumpStackTrace(System.out);
+  }
+}</pre></div><p>Breakpoint definitions return an object that represents the newly defined breakpoint. This object can be kept around to update the breakpoint --- such as temporarily disabling them, adding additional filters, or cancelling them. As an example, the following code activates an exception breakpoint only during the target program is executing between line 7 and 14.</p><div><pre>vm.breakpoint(&quot;org.acme.SubStringTest&quot;,7) {
+  def ebp = vm.exceptionBreakpoint(IllegalArgumentException) { e -&gt;
+    e.dumpStackTrace(System.out);
+  }
+  def x = vm.breakpoint(&quot;org.acme.SubStringTest&quot;,14) {
+    // cancel the exception breakpoint and this breakpoint
+    ebp.delete();
+    x.delete();
+  }
+}</pre></div></div></div><div class="section"><h2>Evaluating Expressions<a name="Evaluating_Expressions"></a></h2><p>In various places in YouDebug, proxy objects are used to represent objects in the target JVM. For example, in the above example, the variable 'e' refers to an object in the YouDebug JVM, which acts as a proxy to the exception object in the target JVM.</p><p>You can invoke methods and access fields on these objects, and they'll translate into the corresponding method invocations and field access on the target JVM. For example, the following code evaluates &quot;e.getMessage()&quot; on the thrown exception and prints the resutling String on the YouDebug JVM. Parameters and arguments are marshalled/unmarshalled. In this way, you can transparently access data in the target JVM.</p><div><pre>vm.exceptionBreakpoint(IllegalArgumentException) { e -&gt;
+  String x = e.getMessage();
+  println x;
+}</pre></div><p>Since the proxy object is still a Java object, some of the method calls (most notably <tt>equals</tt> and <tt>hashCode</tt>) are interpreted locally, not remotely. To invoke these methods on remote objects, instead on proxy objects, escape them by prepending it with '@', like this:</p><div><pre>x.'@hashCode'()   // calls hashCode() on the remote object
+x.hashCode()      // calls hashCode() on the proxy object</pre></div><p>In addition, proxy objects implement <a class="externalLink" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ObjectReference.html">ObjectReference</a> from JDI, so methods defined in those also need to be escaped.</p><div class="section"><h3>Static methods/fields<a name="Static_methodsfields"></a></h3><p>Static methods/fields can be invoked/accessed on a proxy object to <a class="externalLink" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ReferenceType.html">the remote type</a>, much like how you invoke methods/fields on an object reference:</p><div><pre>vm.breakpoint(&quot;Main&quot;,5) {
+  // this will print a message in the target JVM
+  vm.ref(&quot;java.lang.System&quot;).out.println(&quot;Hello from debugger&quot;);
+  
+  // '_' is a synonym of 'ref'. Plus you can use a Class object instead of name,
+  // hence the following equivalent code is bit shorter
+  vm._(System).out.println(&quot;Hello from debugger&quot;);
+}</pre></div></div><div class="section"><h3>Creating Instances<a name="Creating_Instances"></a></h3><p>To create a new object instance, use the &quot;_new&quot; call (the first parameter can be either <tt>String</tt> or <tt>Class</tt>). Or if you already have a proxy object to type, use the &quot;@new&quot; syntax:</p><div><pre>def f = vm._new(File,&quot;/tmp/hello&quot;);
+println f.exists()
+
+vm.exceptionBreakpoint(IllegalArgumentException) { e -&gt;
+  // create another instance of the same exception type. this is a contrived example.
+  // 'type()' gets you a type proxy from an instance proxy.
+  def x = e.type().&quot;@new&quot;();
+}
+
+// or similarly,
+vm._(File).&quot;@new&quot;(&quot;/tmp/hello&quot;);</pre></div></div></div><div class="section"><h2>Inspecting/Manipulating Stack Frames<a name="InspectingManipulating_Stack_Frames"></a></h2><p>When a breakpoint is hit and the target JVM is suspended, you can walk the stack frames of threads and inspect variables. You do this through <a class="externalLink" href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/ThreadReference.html">ThreadReference</a>.</p><p>For example, in the following code, the debugger prints the visible variable 'i' from the current stack frame of the target JVM. A 'visible variable' includes local variables, instance fields, and then static fields in this order.</p><div><pre>vm.breakpoint(&quot;Main&quot;,5) {
+  println i;
+}</pre></div><p>This is actually just a short-hand for <tt>delegate.i</tt> (where <tt>delegate</tt> is a reserved variable in Groovy to point to the closure delegate.) The short form is concise, but a verbose form can be useful for disambiguation, where the variable name hits other Groovy-reserved keywords, like 'owner', 'metaClass', and so on.</p><p>According to Groovy's language rules, the reserved <tt>delegate</tt> variable is only accessible from within the closure. To access the current thread from elsewhere (such as from a subroutine you define), use <tt>vm.currentThread</tt>.</p><div class="section"><h3>Accessing 'this' object<a name="Accessing_this_object"></a></h3><p>In a breakpoint callback, the <tt>self</tt> variable refers to the <tt>this</tt> object in the target VM.</p><div><pre>vm.breakpoint(&quot;Main&quot;,5) {
+  println self;
+}</pre></div></div><div class="section"><h3>Deeper Stack Frame<a name="Deeper_Stack_Frame"></a></h3><p>In a breakpoint callback, <tt>thread</tt> refers to the JDI thread object that hit the breakpoint. This can be used to access deeper stack frames, by <tt>thread.frame(N)</tt> where N=0,1,2 and so on. <tt>thread.frame(0)</tt> is the top of the stack frame, and <tt>thread.frame(1)</tt> is the next one. In the following example, the script will print <tt>args[0]</tt> of the <tt>main</tt> method that's calling <tt>foo</tt>.</p><div><pre>// test program
+class Main {
+  public static void main(String[] args) {
+    foo();
+  }
+  public static void foo() {}
+}
+
+// YouDebug script
+vm.methodEntryBreakpoint(&quot;Main&quot;,&quot;foo&quot;) {
+  println thread.frame(1).args[0];
+}</pre></div><p>The <tt>frame</tt> method returns <a class="externalLink" href="http://docs.oracle.com/javase/6/docs/jdk/api/jpda/jdi/index.html?com/sun/jdi/StackFrame.html">StackFrame</a> object.</p></div><div class="section"><h3>Classes Without Debug Informatoin<a name="Classes_Without_Debug_Informatoin"></a></h3><p>Some classes (most notably classes in <tt>rt.jar</tt>) are compiled without local variable debug information. If you are using JavaSE 6, you can still access method parameters by their positions, like this:</p><div><pre>vm.methodEntryBreakpoint(&quot;Main&quot;,&quot;main&quot;) {
+  // print the first argument to the main method
+  // the explicit use of 'delegate.' is necessary, or else it becomes just a bare literal.
+  println delegate.&quot;@0&quot;;
+}</pre></div></div><div class="section"><h3>Avoiding Name Collisions<a name="Avoiding_Name_Collisions"></a></h3><p>If your variable name collides with other names visible in your Groovy script, Java keywords, etc., you can escape them by prefixing '@'. For example, if the target JVM has a variable named &quot;for&quot;, you can reference it as <tt>delegate.&quot;@for&quot;</tt>. Explicit &quot;delegate&quot; prefix is needed because otherwise this becomes a string literal.</p></div><div class="section"><h3>Dump Stack Frames<a name="Dump_Stack_Frames"></a></h3><p>For your convenience, you can dump the stack frames of a thread by calling <tt>thread.dumpThread</tt>.</p><div><pre>vm.breakpoint(&quot;Main&quot;,5) {
+  thread.dumpThread(); // short for 'delegate.dumpThread()', which is the same as 'vm.currentThread.dumpThread()'
+}</pre></div></div><div class="section"><h3>Accessing Other Threads<a name="Accessing_Other_Threads"></a></h3><p>To access other threads in the system, use <tt>vm.threads</tt>. The following example dumps all the threads the JVM:</p><div><pre>for (t in vm.threads)
+  t.dumpThread();
+
+vm.threads*.dumpThread()   // or more concisely in the Groovy way</pre></div></div></div>
+      </div>
+    </div>
+    <div id="footer">
+      <div class="xright">&#169;  
+          2012
+    
+          
+  
+
+  
+  
+  &nbsp;| Last Published: 05/15/2012
+  &nbsp;| Version: 1.4-SNAPSHOT
+</div>
+      <div class="clear">
+        <hr/>
+      </div>
+    </div>
+    </div></div>
+  </body>
+</html>

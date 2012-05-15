@@ -1,0 +1,215 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+
+
+
+
+
+
+
+
+<html>
+  <head>
+    <title>YouDebug - </title>
+    <style type="text/css" media="all">
+      @import url("./css/maven-base.css");
+      @import url("./css/maven-theme.css");
+      @import url("./css/1024px.css");
+      @import url("./css/site.css");
+    </style>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+      </head>
+  <body>
+    <div id="wrap2"><div id="wrap">
+    <div id="header">
+      <p id="toplinks">Skip to: <a href="#content">Content</a> | <a href="#sidebar">Navigation</a> | <a href="#footer">Footer</a></p>
+		
+            <h1 id="bannerLeft">
+          <a href="http://youdebug.kenai.com/">
+    
+            YouDebug
+    
+            </a>
+        </h1>
+                
+      <p id="slogan">YouDebug is a non-interactive debugger scripted by Groovy to assist
+    remote troubleshooting and data collection to analyze failures.</p>
+    </div>
+    <div id="breadcrumbs">
+      <div class="xright">  </div>
+      <div class="clear">
+        <hr/>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <div id="navcolumn">
+              <h2>
+          YouDebug
+        </h2><ul>
+              
+    <li class="none">
+              <strong>Introduction</strong>
+        </li>
+              
+    <li class="none">
+              <a href="user-guide.html">User Guide</a>
+        </li>
+              
+    <li class="none">
+              <a href="http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.kohsuke%22%20AND%20a%3A%22youdebug%22">Download</a>
+        </li>
+          </ul>
+      <h2>
+          References
+        </h2><ul>
+              
+    <li class="none">
+              <a href="apidocs/index.html">Javadoc</a>
+        </li>
+              
+    <li class="none">
+              <a href="jdi+apidocs/index.html">Groovy JDI</a>
+        </li>
+              
+    <li class="none">
+              <a href="http://java.sun.com/javase/6/docs/jdk/api/jpda/jdi">JDI API</a>
+        </li>
+          </ul>
+      <h2>
+          Project Documentation
+        </h2><ul>
+              
+                
+              
+            
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+            
+      
+              
+            <li class="expanded">
+              <a href="project-info.html">Project Information</a>
+                <ul>
+                  
+    <li class="none">
+              <strong>About</strong>
+        </li>
+                  
+    <li class="none">
+              <a href="integration.html">Continuous Integration</a>
+        </li>
+                  
+    <li class="none">
+              <a href="dependencies.html">Dependencies</a>
+        </li>
+                  
+    <li class="none">
+              <a href="distribution-management.html">Distribution Management</a>
+        </li>
+                  
+    <li class="none">
+              <a href="issue-tracking.html">Issue Tracking</a>
+        </li>
+                  
+    <li class="none">
+              <a href="mail-lists.html">Mailing Lists</a>
+        </li>
+                  
+    <li class="none">
+              <a href="plugin-management.html">Plugin Management</a>
+        </li>
+                  
+    <li class="none">
+              <a href="license.html">Project License</a>
+        </li>
+                  
+    <li class="none">
+              <a href="plugins.html">Project Plugins</a>
+        </li>
+                  
+    <li class="none">
+              <a href="project-summary.html">Project Summary</a>
+        </li>
+                  
+    <li class="none">
+              <a href="team-list.html">Project Team</a>
+        </li>
+                  
+    <li class="none">
+              <a href="source-repository.html">Source Repository</a>
+        </li>
+              </ul>
+        </li>
+              
+                
+              
+      
+            
+      
+              
+        <li class="collapsed">
+              <a href="project-reports.html">Project Reports</a>
+              </li>
+          </ul>
+        </div>
+    </div>
+    <div id="content">
+      <div id="contentBox">
+        <div class="section"><h2>What is YouDebug?<a name="What_is_YouDebug"></a></h2><p>Here is the problem; your program fails at a customer's site with an exception, but you can't (or don't want to) reproduce the problem on your computer, because it's too time consuming. If only you could attach the debugger and collect a few information, you can rapidly proceed on fixing the problem. But running a debugger at a customer's site is practically impossible; if the user isn't a techie, it's out of question. Even if he is, you'd still need the source code loaded up in the IDE, then you have to explain to him where he needs to set breakpoints and what to report back to you. It's just too much work.</p><p>That's where YouDebug comes into play. YouDebug is a Java program that lets you script a debug session through <a class="externalLink" href="http://grovy.codehaus.org/">Groovy</a>. You can think of it as a programmable, non-interactive debugger --- you can create a breakpoint, evaluate expressions, have it dump threads, and a lot more, without requiring any source code. Your customer can just run the tool with the script you supplied, without any knowledge about Java.</p><p>YouDebug uses the same <a class="externalLink" href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi">Java Debug Interface</a> that IDEs use, so from the point of view of your program, YouDebug behaves as a debugger. Therefore you need not do anything special with your program.</p><p>In this way, the troubleshooting of your program gets a lot easier.</p></div><div class="section"><h2>Getting Started<a name="Getting_Started"></a></h2><p>Let's say you have the following program, which computes a String and then do substring.</p><div><pre>public class SubStringTest {
+    public static void main(String[] args) {
+        String s = someLengthComputationOfString();
+        System.out.println(s.substring(5));
+    }
+
+    private static String someLengthComputationOfString() {
+        ...;
+    }
+}</pre></div><p>At runtime, it's failing with the <tt>StringIndexOutOfRangeException</tt>:</p><div><pre>Exception in thread &quot;main&quot; java.lang.StringIndexOutOfBoundsException: String index out of range: -1
+        at java.lang.String.substring(String.java:1949)
+        at java.lang.String.substring(String.java:1916)
+        at SubStringTest.main(SubStringTest.java:7)</pre></div><p>So you know <tt>s.substring(5)</tt> isn't working, but you want to know the value of the variable 's'.</p><p>To do this, you write a YouDebug script. YouDebug scripts are Groovy scripts with some DSL-like syntax sugars specialized for debugging. The following script sets a breakpoint at line 7 of the SubStringTest class, and every time the breakpoint hits, it'll print out the value of the local variable 's'.</p><div><pre>breakpoint(&quot;com.acme.SubStringTest&quot;,7) {
+  println &quot;s=&quot;+s;
+}</pre></div><p>Now, you run your target program with the debug option:</p><div><pre>$ java -agentlib:jdwp=transport=dt_socket,server=y,address=5005 SubStringTest
+Listening for transport dt_socket at address: 5005</pre></div><p>And then you start YouDebug on a separate terminal. YouDebug attaches to your program, and your script will eventually produce the value of 's':</p><div><pre>$ java -jar youdebug.jar -socket 5005 SubStringMonitor.ydb
+s=test</pre></div></div><div class="section"><h2>Features<a name="Features"></a></h2><p>YouDebug exposes all the capabilities of the underlying <a class="externalLink" href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi">JDI</a>, so your script can do the following things:</p><ul><li>Break when the execution reaches a specific line, when an exception is thrown, when a field is referenced or updated.</li><li>Break when a class is loaded/unloaded, a thread is created/destroyed, a method is entered/exited</li><li>Break when a monitor is waited/contended</li><li>Evaluate arbitrary expressions in the target JVM (such as field set/get and method calls)</li><li>List up all the threads, inspect their stack frames, access/modify local variables.</li><li>Obtain heap dump, print the exception stack trace, and so on.</li></ul><p>See <a href="#user-guide.html">the user guide</a> for more details about how to script these capabilities.</p></div>
+      </div>
+    </div>
+    <div id="footer">
+      <div class="xright">&#169;  
+          2012
+    
+          
+  
+
+  
+  
+  &nbsp;| Last Published: 05/15/2012
+  &nbsp;| Version: 1.4-SNAPSHOT
+</div>
+      <div class="clear">
+        <hr/>
+      </div>
+    </div>
+    </div></div>
+  </body>
+</html>
