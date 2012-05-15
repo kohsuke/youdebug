@@ -103,8 +103,9 @@
   </distributionManagement>
 
   <scm>
-    <connection>scm:git:git://github.com/kohsuke/youdebug.git</connection>
-    <developerConnection>scm:git:git://github.com/kohsuke/youdebug.git</developerConnection>
+    <connection>scm:git:git@github.com/kohsuke/${project.artifactId}.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/kohsuke/${project.artifactId}.git</developerConnection>
+    <url>http://${project.artifactId}.kohsuke.org/</url>
   </scm>
 
   <dependencies>
