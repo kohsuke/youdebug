@@ -125,7 +125,7 @@
       <artifactId>tools</artifactId>
       <version>1.5</version>
       <scope>system</scope>
-      <systemPath>${java.home}/../lib/tools.jar</systemPath>
+      <systemPath>${toolsjar}</systemPath>
     </dependency>
     <dependency>
       <groupId>args4j</groupId>
@@ -139,4 +139,27 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>default_profile</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <toolsjar>${java.home}/../lib/tools.jar</toolsjar>
+      </properties>
+    </profile>
+    <profile>
+      <id>osx_profile</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <toolsjar>${java.home}/../Classes/classes.jar</toolsjar>
+      </properties>
+    </profile>
+  </profiles>
 </project>
