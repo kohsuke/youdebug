@@ -311,7 +311,7 @@ public class VM implements Closeable {
             if (e.method().name() == methodName) {
                 body.delegate = new EventDelegate(e.thread());
                 body.resolveStrategy = Closure.DELEGATE_FIRST
-                body.call();
+                body.call(e.method());
             }
         }
         return q;
