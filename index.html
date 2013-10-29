@@ -197,7 +197,7 @@
   println &quot;s=&quot;+s;
 }</pre></div><p>Now, you run your target program with the debug option:</p><div><pre>$ java -agentlib:jdwp=transport=dt_socket,server=y,address=5005 SubStringTest
 Listening for transport dt_socket at address: 5005</pre></div><p>And then you start YouDebug on a separate terminal. YouDebug attaches to your program, and your script will eventually produce the value of 's':</p><div><pre>$ java -jar youdebug.jar -socket 5005 SubStringMonitor.ydb
-s=test</pre></div></div><div class="section"><h2>Features<a name="Features"></a></h2><p>YouDebug exposes all the capabilities of the underlying <a class="externalLink" href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi">JDI</a>, so your script can do the following things:</p><ul><li>Break when the execution reaches a specific line, when an exception is thrown, when a field is referenced or updated.</li><li>Break when a class is loaded/unloaded, a thread is created/destroyed, a method is entered/exited</li><li>Break when a monitor is waited/contended</li><li>Evaluate arbitrary expressions in the target JVM (such as field set/get and method calls)</li><li>List up all the threads, inspect their stack frames, access/modify local variables.</li><li>Obtain heap dump, print the exception stack trace, and so on.</li></ul><p>See <a href="#user-guide.html">the user guide</a> for more details about how to script these capabilities.</p></div>
+s=test</pre></div></div><div class="section"><h2>Features<a name="Features"></a></h2><p>YouDebug exposes all the capabilities of the underlying <a class="externalLink" href="http://java.sun.com/javase/6/docs/technotes/guides/jpda/architecture.html#jdi">JDI</a>, so your script can do the following things:</p><ul><li>Break when the execution reaches a specific line, when an exception is thrown, when a field is referenced or updated.</li><li>Break when a class is loaded/unloaded, a thread is created/destroyed, a method is entered/exited</li><li>Break when a monitor is waited/contended</li><li>Evaluate arbitrary expressions in the target JVM (such as field set/get and method calls)</li><li>List up all the threads, inspect their stack frames, access/modify local variables.</li><li>Obtain heap dump, print the exception stack trace, and so on.</li></ul><p>See <a href="./user-guide.html">the user guide</a> for more details about how to script these capabilities.</p></div>
       </div>
     </div>
     <div id="footer">
@@ -210,8 +210,8 @@ s=test</pre></div></div><div class="section"><h2>Features<a name="Features"></a>
 
   
   
-  &nbsp;| Last Published: 01/05/2013
-  &nbsp;| Version: 1.5
+  &nbsp;| Last Published: 10/28/2013
+  &nbsp;| Version: 1.6-SNAPSHOT
 </div>
       <div class="clear">
         <hr/>
