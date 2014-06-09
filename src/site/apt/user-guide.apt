@@ -6,7 +6,7 @@
 
 Defining Breakpoints
 
-  Breakpoints are event callback handlers that are invoked when a certain event occurs in the target JVM. You can create breakpoints by calling breakpoint mtehods on the 'vm' object. These methods takes a closure that gets invoked when the event occurs, and they often takes additional arguments to control the nature of the breakpoint.
+  Breakpoints are event callback handlers that are invoked when a certain event occurs in the target JVM. You can create breakpoints by calling breakpoint methods on the 'vm' object. These methods takes a closure that gets invoked when the event occurs, and they often takes additional arguments to control the nature of the breakpoint.
 
   The following code defines a breakpoint on line 7 of the <<<org.acme.SubStringTest.java>>> (or whichever source file this class is defined in:)
 
